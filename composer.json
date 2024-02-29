@@ -1,0 +1,31 @@
+{
+    "name": "condoedge/discussion",
+    "description": "Authentication and teams to your kompo application",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Kompo\\Discussions\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.3|^8.0",
+        "laravel/framework": ">=5.6.0",
+        "kompo/kompo": "^3.0",
+        "laravel/fortify": "^1.19",
+        "lab404/laravel-impersonate": "^1.7",
+        "arcanedev/log-viewer": "^10.0",
+        "spatie/laravel-backup": "^8.1",
+        "spatie/laravel-mail-preview": "^6.0",
+        "kompo/auth": "^0.2.24"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kompo\\Discussions\\KompoDiscussionsServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
