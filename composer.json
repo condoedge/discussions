@@ -1,5 +1,5 @@
 {
-    "name": "condoedge/discussion",
+    "name": "condoedge/discussions",
     "description": "Authentication and teams to your kompo application",
     "license": "MIT",
     "autoload": {
