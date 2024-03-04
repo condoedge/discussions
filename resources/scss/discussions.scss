@@ -1,0 +1,30 @@
+.channel-subjects{
+	display: none;
+}
+
+.active-channel, .initial-channel{
+	.channel-subjects{
+		display: block;
+	}
+}
+
+/* Responsive CSS */
+#channel-view-panel{
+	.vlPanelClose{
+		display: none;
+	}
+}
+
+@include media-breakpoint-down(sm) {
+	#channel-view-panel{
+  		display: none;
+  		&.vlPanelNotEmpty{
+  			display: block;
+  		}
+  		.vlPanelClose{
+			display: block;
+			top: 0.75rem;
+			right: 0.75rem;
+		}
+	}
+}

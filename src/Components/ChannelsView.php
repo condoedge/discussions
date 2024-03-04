@@ -15,8 +15,6 @@ class ChannelsView extends Form
 
 	public $containerClass = '';
 
-	protected $initialPage = true;
-
 	public function created()
 	{
 		$this->channel = $this->parameter('channel_id') ?

@@ -4,7 +4,6 @@ namespace Kompo\Discussions\Models;
 
 use Kompo\Auth\Models\Files\MorphManyFilesTrait;
 use Kompo\Auth\Models\Model;
-use Kompo\Auth\Models\Traits\BelongsToUserTrait;
 use Kompo\Discussions\Events\DiscussionSent;
 use Kompo\Discussions\Models\Traits\HasManyDiscussions;
 
@@ -99,7 +98,6 @@ class Discussion extends Model
         if(!($db = $this->box)){
             $db = new DiscussionBox();
             $db->discussion_id = $this->id;
-            $db->setUserId();
         }
         $db->box = $box;
         $db->save();
@@ -108,7 +106,6 @@ class Discussion extends Model
     public function markRead()
     {
         $mr = new DiscussionRead();
-        $mr->setUserId();
         $mr->discussion_id = $this->id;
         $mr->read_at = now();
         $mr->save();
@@ -163,7 +160,7 @@ class Discussion extends Model
 
         return _Rows(
             _UserDate(
-                ($this->read ? '' : $unreadCue).$this->user->name,
+                ($this->read ? '' : $unreadCue).$this->addedBy->name,
                 $this->created_at
             )->class('mb-2'),
             _Html($this->html)
@@ -183,6 +180,6 @@ class Discussion extends Model
 
     public function profileImg()
     {
-        return _ProfileImg($this->user)->class('mr-2 mt-2 shrink-0');
+        return _ProfileImg($this->addedBy)->class('mr-2 mt-2 shrink-0');
     }
 }

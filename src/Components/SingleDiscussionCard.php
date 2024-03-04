@@ -2,8 +2,8 @@
 
 namespace Kompo\Discussions\Components;
 
+use Kompo\Discussions\Components\Traits\ScrollToOnLoadTrait;
 use Kompo\Discussions\Models\Discussion;
-use App\View\Traits\ScrollToOnLoadTrait;
 use Kompo\Query;
 
 class SingleDiscussionCard extends Query
@@ -30,7 +30,7 @@ class SingleDiscussionCard extends Query
     public function created()
     {
         $this->discussionId = $this->store('discussion_id') ?: $this->parameter('id');
-        $this->discussion = Discussion::with('user', 'files', 'read', 'notification')
+        $this->discussion = Discussion::with('addedBy', 'files', 'read')
                                 ->find($this->discussionId);
 
         $this->id('discussion-card-'.$this->discussionId);
@@ -40,7 +40,7 @@ class SingleDiscussionCard extends Query
     public function query()
     {
         return $this->discussion->discussions()
-            ->with('user', 'files', 'read', 'notification')
+            ->with('addedBy', 'files', 'read')
             ->orderByDesc('created_at');
     }
 

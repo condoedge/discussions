@@ -60,12 +60,9 @@ class ChannelsList extends Query
 
     }
 
-    public function render($channel, $key)
+    public function render($channel)
     {
         $isActiveChannel = $channel->id == $this->activeChannelId;
-
-        if($isActiveChannel)
-            $this->activeIndex = $key;
 
         return _Rows(
             _FlexBetween(
@@ -94,7 +91,7 @@ class ChannelsList extends Query
 
             $this->loadSubjects($e, $channel->id);
 
-            $e->get($this->routeChannel, ['id' => $channel->id])
+            $e->selfGet('getChannelView', ['id' => $channel->id])
                 ->onSuccess(function($e) use($channel){
                     $e->inPanel('channel-view-panel');
                     $e->setHistory($this->routeDiscussions, [
@@ -102,6 +99,14 @@ class ChannelsList extends Query
                     ]);
                 });
         });
+    }
+
+    public function getChannelView($id)
+    {
+        return new ChannelDiscussionsPanel([
+            'channel_id' => $id,
+            'box' => $this->box,
+        ]);
     }
 
     protected function loadSubjects($komponent, $channelId)

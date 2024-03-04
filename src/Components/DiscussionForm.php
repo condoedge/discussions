@@ -28,7 +28,6 @@ class DiscussionForm extends Form
 	public function beforeSave()
 	{
 		$this->model->channel_id = $this->channelId;
-		$this->model->setUserId();
 		$this->model->discussion_id = $this->discussionId;
 	}
 
@@ -38,16 +37,7 @@ class DiscussionForm extends Form
 			Discussion::findOrFail($this->model->discussion_id)->boxes()->delete();
 		}
 
-		if (!$this->modelExists) {
-			Activity::createFor(
-				$this->model,
-				__('activity.new-discussion-in').' <b>'.$this->model->channel->name.'</b>'.(
-					$this->model->subject ? (' '.$this->model->subject) : ''
-				),
-			);
-		}
-
-		$this->processMentions();
+		// $this->processMentions();
 	}
 
 	public function completed()
@@ -133,13 +123,13 @@ class DiscussionForm extends Form
 			});
 
 		//recreate notifications if mentionned in old ones
-		$this->model->getAllMentionnedUsers()->reject(
-            fn($userId) => $userId === auth()->user()->id
-        )->each(function($userId){
+		// $this->model->getAllMentionnedUsers()->reject(
+        //     fn($userId) => $userId === auth()->user()->id
+        // )->each(function($userId){
 
-        	if(!$this->model->notifications()->unread()->where('user_id', $userId)->count())
-				$this->model->notify($userId);
+        // 	if(!$this->model->notifications()->unread()->where('user_id', $userId)->count())
+		// 		$this->model->notify($userId);
 
-        });
+        // });
 	}
 }

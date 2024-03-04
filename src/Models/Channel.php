@@ -4,7 +4,6 @@ namespace Kompo\Discussions\Models;
 
 use Kompo\Auth\Models\Model;
 use Kompo\Auth\Models\Teams\BelongsToTeamTrait;
-use Kompo\Auth\Models\Traits\BelongsToUserTrait;
 use Kompo\Discussions\Models\Traits\HasManyDiscussions;
 use App\Models\User;
 
@@ -20,9 +19,14 @@ class Channel extends Model
             ->whereNull('discussion_id');
     }
 
+    public function members()
+    {
+        return $this->hasMany(Member::class);
+    }
+
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->belongsToMany(User::class, 'members');
     }
 
     /* ATTRIBUTES */
@@ -40,7 +44,7 @@ class Channel extends Model
     /* QUERIES */
     public static function withBasicInfo()
     {
-        return static::with('lastDiscussion.user', 'lastDiscussion.read');
+        return static::with('lastDiscussion.addedBy', 'lastDiscussion.read');
     }
 
     public static function queryForUser()
@@ -48,11 +52,11 @@ class Channel extends Model
         $userChannelsIds = self::where('added_by', auth()->id())
             ->orWhereHas('users', function ($query) {
                 $query->where('users.id', auth()->id());
-            });
+            })->pluck('channels.id');
 
         return Channel::whereIn('channels.id', $userChannelsIds)
             ->withCount('subjects')
-            ->with('lastDiscussion.user', 'lastDiscussion.read')
+            ->with('lastDiscussion.addedBy', 'lastDiscussion.read')
             ->ordered();
     }
 

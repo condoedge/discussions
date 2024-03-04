@@ -60,7 +60,7 @@ class ChannelDiscussionsPanel extends Query
         if($this->channel){
             $query = $this->channel->discussions()
                 ->whereNull('discussion_id')
-                ->with('box', 'discussions.user', 'channel')
+                ->with('box', 'discussions.addedBy', 'channel')
                 ->orderByDesc('created_at');
 
             return $this->box ?

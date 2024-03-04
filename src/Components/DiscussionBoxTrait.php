@@ -2,7 +2,6 @@
 
 namespace Kompo\Discussions\Components;
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 trait DiscussionBoxTrait

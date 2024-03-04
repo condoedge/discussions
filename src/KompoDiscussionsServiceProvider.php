@@ -4,6 +4,8 @@ namespace Kompo\Discussions;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
+use Kompo\Discussions\Models\Channel;
+use Kompo\Discussions\Models\Discussion;
 
 class KompoDiscussionsServiceProvider extends ServiceProvider
 {
@@ -15,6 +17,8 @@ class KompoDiscussionsServiceProvider extends ServiceProvider
     
     protected $policies = [
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+        Channel::class => Policies\ChannelPolicy::class,
+        Discussion::class => Policies\DiscussionPolicy::class,
     ];
 
     protected $morphRelationsMap = [

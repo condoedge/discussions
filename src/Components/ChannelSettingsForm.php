@@ -14,7 +14,6 @@ class ChannelSettingsForm extends Form
 	public function beforeSave()
 	{
 		$this->model->setTeamId();
-		$this->model->setUserId();
 	}
 
 	public function response()
@@ -51,7 +50,7 @@ class ChannelSettingsForm extends Form
 	        _MiniTitle('Members')->class('mb-2'),
 
 			_MultiSelect()->placeholder(__('discussions.add-members'))->name('users')
-	        	->options(currentTeam()->users()->where('id', '!=', auth()->user()->id)->get()
+	        	->options(currentTeam()->users()->where('users.id', '!=', auth()->user()->id)->get()
 	        		->mapWithKeys(fn($user) => [
 	        			$user->id => _Html($user->name)
 	        		])
