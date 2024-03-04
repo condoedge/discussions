@@ -40,7 +40,7 @@ class ChannelSettingsForm extends Form
 	        	)->class('flex-auto'),
 				$this->model->id ?
 
-					_Link('Back')->icon('arrow-left')->get('channel', [
+					_Link('Back')->icon('arrow-left')->selfGet('getChannel', [
 						'id' => $this->model->id
 					])->inPanel('channel-view-panel') :
 
@@ -59,6 +59,13 @@ class ChannelSettingsForm extends Form
 			_SubmitButton('Save'),
 
 		)->class('p-4');
+	}
+
+	public function getChannel($id)
+	{
+		return new ChannelDiscussionsPanel([
+            'channel_id' => $id,
+        ]);
 	}
 
 	public function rules()
