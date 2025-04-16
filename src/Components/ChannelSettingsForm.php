@@ -3,7 +3,7 @@
 namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Models\Channel;
-use Kompo\Form;
+use Condoedge\Utils\Kompo\Common\Form;
 
 class ChannelSettingsForm extends Form
 {

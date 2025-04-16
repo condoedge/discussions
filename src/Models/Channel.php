@@ -2,10 +2,10 @@
 
 namespace Kompo\Discussions\Models;
 
-use Kompo\Auth\Models\Model;
-use Kompo\Auth\Models\Teams\BelongsToTeamTrait;
 use Kompo\Discussions\Models\Traits\HasManyDiscussions;
 use App\Models\User;
+use Condoedge\Utils\Models\Model;
+use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 
 class Channel extends Model
 {

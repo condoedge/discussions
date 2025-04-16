@@ -2,7 +2,7 @@
 
 namespace Kompo\Discussions\Models;
 
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Model;
 
 class DiscussionBox extends Model
 {    
