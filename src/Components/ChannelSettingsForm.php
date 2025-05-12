@@ -30,24 +30,24 @@ class ChannelSettingsForm extends Form
 	        _FlexBetween(
 	        	_Columns(
 	        		_Rows(
-		        		_MiniTitle('Name')->class('mb-2'),
-						_Input()->placeholder('discussions.channel-name')->name('name')
+		        		_MiniTitle('discussions.title')->class('mb-2'),
+						_Input()->placeholder('discussions.channel-title')->name('name')
 					),
 	        		_Rows(
 		        		_MiniTitle('discussions.owner')->class('mb-3'),
-						_Html('<span class="vlTagOutlined">'.auth()->user()->name.'</span>'),
+						_Html(auth()->user()->name),
 					),
 	        	)->class('flex-auto'),
 				$this->model->id ?
 
-					_Link('Back')->icon('arrow-left')->get('channel', [
+					_Link('discussions.back')->icon('arrow-left')->get('channel', [
 						'id' => $this->model->id
 					])->inPanel('channel-view-panel') :
 
-					_Link('Back')->icon('arrow-left')->href('discussions')
+					_Link('discussions.back')->icon('arrow-left')->href('discussions')
 			)->alignStart(),
 
-	        _MiniTitle('Members')->class('mb-2'),
+	        _MiniTitle('discussions.members')->class('mb-2'),
 
 			_MultiSelect()->placeholder(__('discussions.add-members'))->name('users')
 	        	->options(currentTeam()->users()->where('users.id', '!=', auth()->user()->id)->get()
@@ -56,7 +56,7 @@ class ChannelSettingsForm extends Form
 	        		])
 	        	),
 
-			_SubmitButton('Save'),
+			_SubmitButton('discussions.save'),
 
 		)->class('p-4');
 	}

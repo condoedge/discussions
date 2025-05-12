@@ -82,8 +82,7 @@ class SingleDiscussionCard extends Query
     {
         return _Panel(
             _Flex(
-                _Button('Reply')->icon(_Sax('message',20))
-                    ->outlined()
+                _Button('discussions.reply')->icon(_Sax('message',20))
                     ->class('text-xs mb-2 ml-2')
                     ->get('discussion-reply', [
                         'discussion_id' => $this->discussionId

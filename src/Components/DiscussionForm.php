@@ -52,14 +52,13 @@ class DiscussionForm extends Form
 	        _CKEditor()->name('html')
 	        	->class('ckNoToolbar mb-0')
 	        	->focusOnLoad(),
-	        _FlexEnd(
+	        _FlexEnd2(
 				_MultiFile()->name('files')
 					->class('asUploadButton mb-0')
 					->extraAttributes([
 						'team_id' => currentTeam()->id,
 					]),
-				_SubmitButton('Send')
-					->outlined()
+				_SubmitButton('discussions.send')
 					->refresh(
 						$this->discussionId ?
 							('discussion-card-'.$this->discussionId) :
@@ -85,7 +84,7 @@ class DiscussionForm extends Form
 					->class($textClass)->class('py-4'),
 				_Div(
 					_Input()->placeholder('discussions.subject-optional')->name('subject')
-						->class('pr-4 text-lg font-semibold')
+						->class('pr-4 text-lg')
 						->dontSubmitOnEnter(),
 					_Link()->icon('icon-times')
 						->toggleId('subject-input')
