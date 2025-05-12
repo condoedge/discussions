@@ -2,8 +2,8 @@
 
 namespace Kompo\Discussions\Models;
 
-use Kompo\Auth\Models\Files\MorphManyFilesTrait;
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Files\MorphManyFilesTrait;
+use Condoedge\Utils\Models\Model;
 use Kompo\Discussions\Events\DiscussionSent;
 use Kompo\Discussions\Models\Traits\HasManyDiscussions;
 

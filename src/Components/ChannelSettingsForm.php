@@ -3,7 +3,7 @@
 namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Models\Channel;
-use Kompo\Form;
+use Condoedge\Utils\Kompo\Common\Form;
 
 class ChannelSettingsForm extends Form
 {
@@ -40,7 +40,7 @@ class ChannelSettingsForm extends Form
 	        	)->class('flex-auto'),
 				$this->model->id ?
 
-					_Link('discussions.back')->icon('arrow-left')->get('channel', [
+					_Link('Back')->icon('arrow-left')->selfGet('getChannel', [
 						'id' => $this->model->id
 					])->inPanel('channel-view-panel') :
 
@@ -59,6 +59,13 @@ class ChannelSettingsForm extends Form
 			_SubmitButton('discussions.save'),
 
 		)->class('p-4');
+	}
+
+	public function getChannel($id)
+	{
+		return new ChannelDiscussionsPanel([
+            'channel_id' => $id,
+        ]);
 	}
 
 	public function rules()

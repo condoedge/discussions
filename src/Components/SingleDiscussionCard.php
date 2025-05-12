@@ -4,7 +4,7 @@ namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Components\Traits\ScrollToOnLoadTrait;
 use Kompo\Discussions\Models\Discussion;
-use Kompo\Query;
+use Condoedge\Utils\Kompo\Common\Query;
 
 class SingleDiscussionCard extends Query
 {

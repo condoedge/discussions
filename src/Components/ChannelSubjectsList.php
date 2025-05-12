@@ -4,7 +4,7 @@ namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Models\Channel;
 use Kompo\Discussions\Models\Discussion;
-use Kompo\Query;
+use Condoedge\Utils\Kompo\Common\Query;
 
 class ChannelSubjectsList extends Query
 {

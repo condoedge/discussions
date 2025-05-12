@@ -6,7 +6,7 @@ use App\Models\Activity;
 use Kompo\Discussions\Models\Channel;
 use Kompo\Discussions\Models\Discussion;
 use App\View\Components\CKEditorExtended;
-use Kompo\Form;
+use Condoedge\Utils\Kompo\Common\Form;
 
 class DiscussionForm extends Form
 {
