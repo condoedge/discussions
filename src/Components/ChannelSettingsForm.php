@@ -40,7 +40,7 @@ class ChannelSettingsForm extends Form
 	        	)->class('flex-auto'),
 				$this->model->id ?
 
-					_Link('Back')->icon('arrow-left')->selfGet('getChannel', [
+					_Link('discussions.back')->icon('arrow-left')->selfGet('getChannel', [
 						'id' => $this->model->id
 					])->inPanel('channel-view-panel') :
 
