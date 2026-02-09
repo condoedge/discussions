@@ -30,35 +30,53 @@ class ChannelSettingsForm extends Form
 	        _FlexBetween(
 	        	_Columns(
 	        		_Rows(
-		        		_MiniTitle('discussions.title')->class('mb-2'),
-						_Input()->placeholder('discussions.channel-title')->name('name')
+		        		_MiniTitle('Name')->class('mb-2'),
+						_Input()->placeholder('discussions.channel-name')->name('name')
 					),
 	        		_Rows(
 		        		_MiniTitle('discussions.owner')->class('mb-3'),
-						_Html(auth()->user()->name),
+						_Html('<span class="vlTagOutlined">'.auth()->user()->name.'</span>'),
 					),
 	        	)->class('flex-auto'),
 				$this->model->id ?
 
-					_Link('discussions.back')->icon('arrow-left')->selfGet('getChannel', [
+					_Link('Back')->icon('arrow-left')->selfGet('getChannel', [
 						'id' => $this->model->id
 					])->inPanel('channel-view-panel') :
 
-					_Link('discussions.back')->icon('arrow-left')->href('discussions')
+					_Link('Back')->icon('arrow-left')->href('discussions')
 			)->alignStart(),
 
-	        _MiniTitle('discussions.members')->class('mb-2'),
+	        _MiniTitle('Members')->class('mb-2'),
 
 			_MultiSelect()->placeholder(__('discussions.add-members'))->name('users')
-	        	->options(currentTeam()->users()->where('users.id', '!=', auth()->user()->id)->get()
-	        		->mapWithKeys(fn($user) => [
-	        			$user->id => _Html($user->name)
-	        		])
-	        	),
+	        	->searchOptions(3, 'getAvailableTeamUsers', 'retrieveUsers'),
 
-			_SubmitButton('discussions.save'),
+			_SubmitButton('Save'),
 
 		)->class('p-4');
+	}
+
+	public function getAvailableTeamUsers($search)
+	{
+		if (method_exists(currentTeam(), 'getAvailableUsersForChannel')) {
+			return currentTeam()->getAvailableUsersForChannel($this->model, $search)
+				->mapWithKeys(fn($user) => [
+					$user->id => _Html($user->name)
+				]);
+		}
+
+		return currentTeam()->users()->where('users.id', '!=', auth()->user()->id)
+			->take(100)->search($search)
+			->get()
+			->mapWithKeys(fn($user) => [
+				$user->id => _Html($user->name)
+			]);
+	}
+
+	public function retrieveUsers($users)
+	{
+		return [$users->id => _Html($users->name)];
 	}
 
 	public function getChannel($id)
