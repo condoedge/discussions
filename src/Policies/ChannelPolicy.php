@@ -8,6 +8,6 @@ class ChannelPolicy
 {
     public function view(\App\Models\User $user, Channel $channel)
     {
-        return $channel->forAuthUser($user->id)->exists();
+        return Channel::queryForUser($user->id)->where('channels.id', $channel->id)->exists();
     }
 }

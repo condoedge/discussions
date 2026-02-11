@@ -47,11 +47,13 @@ class Channel extends Model
         return static::with('lastDiscussion.addedBy', 'lastDiscussion.read');
     }
 
-    public static function queryForUser()
+    public static function queryForUser($userId = null)
     {
-        $userChannelsIds = self::where('added_by', auth()->id())
-            ->orWhereHas('users', function ($query) {
-                $query->where('users.id', auth()->id());
+        $userId = $userId ?: auth()->id();
+
+        $userChannelsIds = self::where('added_by', $userId)
+            ->orWhereHas('users', function ($query) use ($userId) {
+                $query->where('users.id', $userId);
             })->pluck('channels.id');
 
         return Channel::whereIn('channels.id', $userChannelsIds)
