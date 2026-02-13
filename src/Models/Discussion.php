@@ -121,6 +121,11 @@ class Discussion extends Model
         broadcast(new DiscussionSent(currentTeam()->id))->toOthers();
     }
 
+    public function pushSentEvent()
+    {
+        event(new DiscussionSent(currentTeam()->id, $this));
+    }
+
     public static function pusherRefresh()
     {
         return [
@@ -142,11 +147,63 @@ class Discussion extends Model
     /* ELEMENTS */
     public function cardWithActions($withImg = true)
     {
-        $card = _Flex(
-            $withImg ? $this->profileImg() : null,
-            $this->discussionText()->class('pb-2 flex-auto')
-        )->alignStart()
-        ->class('pb-2 px-4 bg-white');
+        $isCurrentUser = $this->added_by === auth()->id();
+
+        // Récupérer les utilisateurs qui ont lu le message (sauf l'auteur)
+        $readByUsers = $isCurrentUser ? $this->reads()
+            ->with('user')
+            ->where('added_by', '!=', $this->added_by)
+            ->get()
+            ->map(fn($read) => $read->user)
+            ->filter() : collect();
+
+        $card = _Rows(
+            // Name and timestamp (outside bubble)
+            _Flex(
+                $withImg ? $this->profileImg() : null,
+                _Html($this->addedBy->name)->class('text-sm font-medium text-gray-900 ml-2')
+            )->class('items-center mb-1'),
+
+            // Message bubble
+            _Rows(
+                _Html($this->cleanHtml())->class($isCurrentUser
+                    ? 'text-white ck ck-content leading-relaxed'
+                    : 'text-gray-900 ck ck-content leading-relaxed'
+                ),
+
+                !$this->files->count() ? null :
+                    _Flex(
+                        $this->files->map(function($file){
+                            return $file->linkEl()
+                                ->href($file->link)
+                                ->attr(['download' => $file->name])
+                                ->class($isCurrentUser ? 'text-white' : 'text-gray-900');
+                        })
+                    )->class('mt-2 flex-wrap gap-2'),
+
+                // Timestamp inside bubble avec indicateurs de lecture
+                _Flex(
+                    _Html($this->created_at->format('H:i'))->class($isCurrentUser
+                        ? 'text-xs text-white text-opacity-80'
+                        : 'text-xs text-gray-500'
+                    ),
+
+                    // Petits ronds de profil des lecteurs (style Messenger)
+                    !$isCurrentUser || !$readByUsers->count() ? null :
+                        _Flex(
+                            $readByUsers->take(3)->map(function($user) {
+                                $avatarUrl = $user->avatar_path ?: 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&size=16';
+                                return _Html('<img src="' . $avatarUrl . '" alt="' . htmlspecialchars($user->name) . '" class="w-4 h-4 rounded-full border border-white" title="Vu par ' . htmlspecialchars($user->name) . '" />');
+                            })
+                        )->class('flex -space-x-1 ml-2')
+                )->class('mt-1 items-center justify-end')
+
+            )->class($isCurrentUser
+                ? 'bg-level1 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm'
+                : 'bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm'
+            )->class($this->read ? '' : 'ring-2 ring-level3 ring-opacity-30')
+
+        )->class('message-bubble-container group');
 
         if($this->notification)
             $this->notification->markSeen();
@@ -181,5 +238,13 @@ class Discussion extends Model
     public function profileImg()
     {
         return _ProfileImg($this->addedBy)->class('mr-2 mt-2 shrink-0');
+    }
+
+    public function cleanHtml()
+    {
+        // Remove empty paragraphs with &nbsp; or just whitespace
+        $html = $this->html;
+        $html = preg_replace('/<p>(&nbsp;|\s|<br\s*\/?>)*<\/p>/i', '', $html);
+        return trim($html);
     }
 }

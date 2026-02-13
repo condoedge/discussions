@@ -28,3 +28,50 @@
 		}
 	}
 }
+
+/* MESSAGES MESSENGER STYLE */
+.message-actions {
+	transition: opacity 0.2s ease-in-out;
+}
+
+.flex-row-reverse:hover .message-actions,
+.flex-row:hover .message-actions {
+	opacity: 1 !important;
+}
+
+/* Message bubbles - make CKEditor content look good in bubbles */
+.ck-content {
+	p {
+		margin-bottom: 0.5rem;
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	// Hide paragraphs that only contain &nbsp;
+	p:last-child:only-child {
+		margin-bottom: 0;
+	}
+
+	a {
+		text-decoration: underline;
+		&:hover {
+			opacity: 0.8;
+		}
+	}
+}
+
+/* White text in blue bubbles */
+.bg-level1 .ck-content {
+	color: white;
+
+	a {
+		color: white;
+		font-weight: 500;
+	}
+
+	strong, b {
+		font-weight: 600;
+	}
+}
+

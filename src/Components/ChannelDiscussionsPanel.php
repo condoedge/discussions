@@ -42,10 +42,10 @@ class ChannelDiscussionsPanel extends Query
             abort(403);
         }
 
-        $this->itemsWrapperClass = 'channel-scroll overflow-y-auto mini-scroll py-10';
+        $this->itemsWrapperClass = 'channel-scroll overflow-y-auto mini-scroll py-4 px-4';
         $this->itemsWrapperStyle = $this->discussionId ?
-                                    'height: calc(100vh - 140px)' :
-                                    'height: calc(100vh - 352px)';
+                                    'height: calc(100vh - 140px);' :
+                                    'height: calc(100vh - 352px);';
 
         $this->pusherRefresh = Discussion::pusherRefresh();
 
@@ -60,13 +60,11 @@ class ChannelDiscussionsPanel extends Query
         if($this->channel){
             $query = $this->channel->discussions()
                 ->whereNull('discussion_id')
-                ->with('box', 'discussions.addedBy', 'channel')
+                ->with('box', 'addedBy', 'discussions.addedBy', 'channel')
                 ->orderByDesc('created_at');
 
             return $this->box ?
-
                 $query->whereHas('box', fn($q) => $q->where('box', $this->box)) :
-
                 $query->doesntHave('box');
         }
     }
@@ -98,7 +96,7 @@ class ChannelDiscussionsPanel extends Query
 
                     _Link()->icon(_Sax('setting-2',20))->class('mr-8 md:mr-0')
                         ->get('channel-settings', ['id' => $this->channelId])
-                        ->inPanel('channel-view-panel')
+                        ->inModal()
                 )
 
             )->class('p-4 text-xl font-bold bg-white border-b border-gray-200');
@@ -106,21 +104,32 @@ class ChannelDiscussionsPanel extends Query
 
     public function render($discussion)
     {
-        $card = _Rows(
-            _FlexEnd(
-                $discussion->isArchived ?
-                    $this->discussionAction('archive-1', 'unarchiveDiscussion', $discussion) :
-                    $this->discussionAction('archive-1', 'archiveDiscussion', $discussion),
+        // Détermine si c'est un message de l'utilisateur actuel
+        $discussionUserId = $discussion->getAttributes()['added_by'] ?? $discussion->addedBy->id ?? null;
+        $isCurrentUser = (int)$discussionUserId === (int)auth()->id();
 
-                $discussion->isTrashed ?
-                    $this->discussionAction('trash', 'untrashDiscussion', $discussion) :
-                    $this->discussionAction('trash', 'trashDiscussion', $discussion),
+        // Style messenger avec cards
+        $flexDirection = $isCurrentUser ? 'flex-row-reverse' : 'flex-row';
+        $alignItems = $isCurrentUser ? 'items-end' : 'items-start';
 
-            )->class('absolute top-6 right-4'),
-            with(new SingleDiscussionCard([
-                'discussion_id' => $discussion->id
-            ]))->class('py-3')
-        )->class('relative max-w-2xl mx-auto w-full px-2');
+        $card = _Flex(
+            // Actions (cachées, visibles au hover)
+            // _Flex(
+            //     $discussion->isArchived ?
+            //         $this->discussionAction('archive-1', 'unarchiveDiscussion', $discussion) :
+            //         $this->discussionAction('archive-1', 'archiveDiscussion', $discussion),
+
+            //     $discussion->isTrashed ?
+            //         $this->discussionAction('trash', 'untrashDiscussion', $discussion) :
+            //         $this->discussionAction('trash', 'trashDiscussion', $discussion),
+            // )->class('message-actions opacity-0 transition-opacity flex gap-1'),
+
+            // Card du message avec bulle moderne
+            _Rows(
+                $discussion->cardWithActions(!$isCurrentUser)
+            )->class('max-w-2xl px-2')
+
+        )->class('mb-4 gap-2 ' . $flexDirection . ' ' . $alignItems);
 
         if (!$discussion->read) {
             $this->scrollToId = $this->scrollToId ?: $discussion->id;

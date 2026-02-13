@@ -43,6 +43,7 @@ class DiscussionForm extends Form
 	public function completed()
 	{
 		Discussion::pusherBroadcast();
+		$this->model->pushSentEvent();
 	}
 
 	public function render()
@@ -81,17 +82,19 @@ class DiscussionForm extends Form
 			_Rows(
 				_Link('')->icon('icon-plus')
 					->toggleId('subject-input')
-					->class($textClass)->class('py-4'),
+					->class($textClass)->class('py-4 absolute top-0 right-2'),
 				_Div(
-					_Input()->placeholder('discussions.subject-optional')->name('subject')
-						->class('pr-4 text-lg')
-						->dontSubmitOnEnter(),
+					_Rows(
+						_Input()->placeholder('discussions.subject-optional')->name('subject')
+							->class('text-lg w-full')
+							->dontSubmitOnEnter(),
+					)->class('absolute top-0 right-0 w-full'),
 					_Link()->icon('icon-times')
 						->toggleId('subject-input')
-						->class('absolute top-5 right-6 text-level1 text-lg')
-				)->id('subject-input')
-				->class('absolute pt-2 z-10 top-0 w-full')
-			);
+						->class('absolute top-3 right-6 text-level1 text-lg')
+				)->id('subject-input'),
+				_Input()->placeholder('patch')->name('_', false)->class('opacity-0')->style('z-index: -1;')
+			)->class('relative');
 	}
 
 	public function rules()
