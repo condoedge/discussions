@@ -193,7 +193,8 @@ class Discussion extends Model
                         _Flex(
                             $readByUsers->take(3)->map(function($user) {
                                 $avatarUrl = $user->avatar_path ?: 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&size=16';
-                                return _Html('<img src="' . $avatarUrl . '" alt="' . htmlspecialchars($user->name) . '" class="w-4 h-4 rounded-full border border-white" title="Vu par ' . htmlspecialchars($user->name) . '" />');
+                                return _Img($avatarUrl)->class('w-4 h-4 rounded-full border-2 border-white -ml-1')
+                                    ->attr(['title' => $user->name, 'alt' => $user->name]);
                             })
                         )->class('flex -space-x-1 ml-2')
                 )->class('mt-1 items-center justify-end')

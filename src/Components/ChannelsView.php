@@ -89,7 +89,7 @@ class ChannelsView extends Form
 									$isCurrentUser = $user->id === auth()->id();
 									$badge = $isCurrentUser ? '<span class="ml-1 text-xs text-gray-500">(vous)</span>' : '';
 									return _Flex(
-										_Html('<img src="' . $avatarUrl . '" alt="' . htmlspecialchars($user->name) . '" class="w-8 h-8 rounded-full mr-2 object-cover" />'),
+										_Img($avatarUrl)->class('w-8 h-8 rounded-full mr-2 object-cover'),
 										_Html($user->name . $badge)->class('text-sm text-gray-700')
 									)->class('px-4 py-2 hover:bg-gray-50 transition-colors');
 								})->toArray()
