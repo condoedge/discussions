@@ -30,7 +30,7 @@ class ChannelSettingsForm extends Form
 	        _FlexBetween(
 	        	_Columns(
 	        		_Rows(
-		        		_MiniTitle('Name')->class('mb-2'),
+		        		_MiniTitle('discussions.name')->class('mb-2'),
 						_Input()->placeholder('discussions.channel-name')->name('name')
 					),
 	        		_Rows(
@@ -40,19 +40,19 @@ class ChannelSettingsForm extends Form
 	        	)->class('flex-auto'),
 				$this->model->id ?
 
-					_Link('Back')->icon('arrow-left')->selfGet('getChannel', [
+					_Link('discussions.back')->icon('arrow-left')->selfGet('getChannel', [
 						'id' => $this->model->id
 					])->inPanel('channel-view-panel') :
 
-					_Link('Back')->icon('arrow-left')->href('discussions')
+					_Link('discussions.back')->icon('arrow-left')->href('discussions')
 			)->alignStart(),
 
-	        _MiniTitle('Members')->class('mb-2'),
+	        _MiniTitle('discussions.members')->class('mb-2'),
 
 			_MultiSelect()->placeholder(__('discussions.add-members'))->name('users')
 	        	->searchOptions(3, 'getAvailableTeamUsers', 'retrieveUsers'),
 
-			_SubmitButton('Save'),
+			_SubmitButton('discussions.save'),
 
 		)->class('p-4');
 	}
