@@ -173,7 +173,7 @@ class Discussion extends Model
 
                 !$this->files->count() ? null :
                     _Flex(
-                        $this->files->map(function($file){
+                        $this->files->map(function($file) use ($isCurrentUser) {
                             return $file->linkEl()
                                 ->href($file->link)
                                 ->attr(['download' => $file->name])
@@ -227,10 +227,11 @@ class Discussion extends Model
             !$this->files->count() ? null :
 
                 _Flex(
-                    $this->files->map(function($file){
+                    $this->files->map(function($file) use ($isCurrentUser) {
                         return $file->linkEl()
                             ->href($file->link)
-                            ->attr(['download' => $file->name]);
+                            ->attr(['download' => $file->name])
+                            ->class($isCurrentUser ? 'text-white' : 'text-gray-900');
                     })
                 )->class('mt-2 flex-wrap'),
         )->class('flex-auto pb-2'.($this->read ? '' : ' border-l-4 border-level3 border-opacity-50 pl-4'));
