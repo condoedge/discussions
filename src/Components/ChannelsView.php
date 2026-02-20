@@ -34,7 +34,7 @@ class ChannelsView extends Form
 			// Colonne 1: Liste des discussions (Rouge)
 			_Rows(
 				_FlexBetween(
-					_Html('Discussions')->class('font-bold'),
+					_Html('discussions.title')->class('font-bold'),
 					_FlexEnd(
 						_Link()->icon(_Sax('archive-1'))
 	                		->href($this->box == 1 ? 'discussions' : 'discussions.archive')
@@ -65,7 +65,7 @@ class ChannelsView extends Form
 						'channel_id' => $this->channelId,
 						'box' => $this->box,
 					])) :
-					_Html('discussions.no-channels')->class('text-gray-600 text-center p-10')
+					_Html(__('discussions.no-channels'))->class('text-gray-600 text-center p-10')
 			)->id('channel-view-panel')
 			->class('bg-gray-100 h-screen flex-1 flex flex-col'),
 
@@ -79,7 +79,7 @@ class ChannelsView extends Form
 								->get('channel-settings', ['id' => $this->channelId])->inModal()
 						)->class('p-4 border-b border-gray-200'),
 
-						_Html('Participants')->class('px-4 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase'),
+						_Html('discussions.participants')->class('px-4 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase'),
 						_Rows(
 							collect([$this->channel->addedBy])
 								->concat($this->channel->users)
@@ -87,7 +87,7 @@ class ChannelsView extends Form
 								->map(function($user) {
 									$avatarUrl = $user->avatar_path ?: 'https://ui-avatars.com/api/?name=' . urlencode($user->name);
 									$isCurrentUser = $user->id === auth()->id();
-									$badge = $isCurrentUser ? '<span class="ml-1 text-xs text-gray-500">(vous)</span>' : '';
+									$badge = $isCurrentUser ? '<span class="ml-1 text-xs text-gray-500">'.__('discussions.you').'</span>' : '';
 									return _Flex(
 										_Img($avatarUrl)->class('w-8 h-8 rounded-full mr-2 object-cover'),
 										_Html($user->name . $badge)->class('text-sm text-gray-700')
@@ -95,10 +95,10 @@ class ChannelsView extends Form
 								})->toArray()
 						),
 
-						_Html('Pièces jointes')->class('px-4 pt-6 pb-2 text-xs font-semibold text-gray-500 uppercase'),
+						_Html('discussions.attachments')->class('px-4 pt-6 pb-2 text-xs font-semibold text-gray-500 uppercase'),
 						_Div(
 							// TODO: Liste des fichiers partagés
-							_Html('Aucune pièce jointe')->class('text-sm text-gray-600 px-4 py-2')
+							_Html('discussions.no-attachments')->class('text-sm text-gray-600 px-4 py-2')
 						)
 					)
 				)->class('bg-white border-l border-gray-200 h-screen overflow-y-auto')

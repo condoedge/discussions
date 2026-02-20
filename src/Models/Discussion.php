@@ -214,7 +214,7 @@ class Discussion extends Model
 
     public function discussionText()
     {
-        $unreadCue = '<span class="text-level1 opacity-60 text-xs">('.__('New').')</span> ';
+        $unreadCue = '<span class="text-level1 opacity-60 text-xs">('.__('discussions.new').')</span> ';
 
         return _Rows(
             _UserDate(
