@@ -31,7 +31,7 @@ class ChannelsView extends Form
 	public function render()
 	{
 		return _Div(
-			// Colonne 1: Liste des discussions (Rouge)
+			// Colonne 1: Liste des discussions
 			_Rows(
 				_FlexBetween(
 					_Html('Discussions')->class('font-bold'),
@@ -55,10 +55,9 @@ class ChannelsView extends Form
 					'box' => $this->box,
 				])
 
-			)->class('bg-white border-r border-gray-200 h-screen overflow-y-auto')
-			->style('width: 280px; flex-shrink: 0;'),
+			)->class('discussions-channels-col bg-white border-r border-gray-200 h-screen overflow-y-auto'),
 
-			// Colonne 2: Section messages (Bleue)
+			// Colonne 2: Section messages
 			_Panel(
 				$this->channelId ?
 					(new ChannelDiscussionsPanel([
@@ -69,7 +68,7 @@ class ChannelsView extends Form
 			)->id('channel-view-panel')
 			->class('bg-gray-100 h-screen flex-1 flex flex-col'),
 
-			// Colonne 3: Panneau latéral (Vert)
+			// Colonne 3: Panneau latéral
 			$this->channelId ?
 				_Div(
 					_Rows(
@@ -97,15 +96,13 @@ class ChannelsView extends Form
 
 						_Html('Pièces jointes')->class('px-4 pt-6 pb-2 text-xs font-semibold text-gray-500 uppercase'),
 						_Div(
-							// TODO: Liste des fichiers partagés
 							_Html('Aucune pièce jointe')->class('text-sm text-gray-600 px-4 py-2')
 						)
 					)
-				)->class('bg-white border-l border-gray-200 h-screen overflow-y-auto')
-				->style('width: 320px; flex-shrink: 0;')
+				)->class('discussions-sidebar-col bg-white border-l border-gray-200 h-screen overflow-y-auto')
 			: null
 
-		)->class('flex')
+		)->class('discussions-layout flex')
 		->style('margin-top:-2vh');
 	}
 }
