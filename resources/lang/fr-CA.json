@@ -1,3 +1,26 @@
 {
-	"discussions.no-channels": "Aucun canaux"
+	"discussions.no-channels": "Aucun canal",
+	"discussions.no-discussions": "Aucune discussion",
+	"discussions.add-members": "Ajouter des membres",
+	"discussions.replying-to": "Réponse à",
+	"discussions.owner": "Propriétaire",
+	"discussions.channel-name": "Nom du canal",
+	"discussions.subject-optional": "Sujet (optionnel)",
+	"discussions.reply": "Répondre",
+	"discussions.send": "Envoyer",
+	"discussions.discussion-archived": "Discussion archivée",
+	"discussions.discussion-removed-archive": "Discussion retirée de l'archive",
+	"discussions.discussion-trashed": "Discussion supprimée",
+	"discussions.discussion-removed-trash": "Discussion retirée de la corbeille",
+	"discussions.title": "Discussions",
+	"discussions.participants": "Participants",
+	"discussions.attachments": "Pièces jointes",
+	"discussions.no-attachments": "Aucune pièce jointe",
+	"discussions.no-messages": "Aucun message",
+	"discussions.name": "Nom",
+	"discussions.members": "Membres",
+	"discussions.back": "Retour",
+	"discussions.save": "Enregistrer",
+	"discussions.you": "(vous)",
+	"discussions.new": "Nouveau"
 }
