@@ -9,8 +9,6 @@ class ChannelSettingsForm extends Form
 {
 	public $model = Channel::class;
 
-	public $style = 'height:calc(100vh - 200px)';
-
 	public function beforeSave()
 	{
 		$this->model->setTeamId();
