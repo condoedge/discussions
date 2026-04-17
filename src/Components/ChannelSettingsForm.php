@@ -4,6 +4,7 @@ namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Models\Channel;
 use Condoedge\Utils\Kompo\Common\Form;
+use Kompo\Auth\Facades\UserModel;
 
 class ChannelSettingsForm extends Form
 {
@@ -58,18 +59,16 @@ class ChannelSettingsForm extends Form
 	public function getAvailableTeamUsers($search)
 	{
 		if (method_exists(currentTeam(), 'getAvailableUsersForChannel')) {
-			return currentTeam()->getAvailableUsersForChannel($this->model, $search)
-				->mapWithKeys(fn($user) => [
-					$user->id => _Html($user->name)
-				]);
+			return UserModel::buildDisambiguatedOptions(
+				currentTeam()->getAvailableUsersForChannel($this->model, $search)
+			);
 		}
 
-		return currentTeam()->users()->where('users.id', '!=', auth()->user()->id)
+		$users = currentTeam()->users()->where('users.id', '!=', auth()->user()->id)
 			->take(100)->search($search)
-			->get()
-			->mapWithKeys(fn($user) => [
-				$user->id => _Html($user->name)
-			]);
+			->get();
+
+		return UserModel::buildDisambiguatedOptions($users);
 	}
 
 	public function retrieveUsers($users)
