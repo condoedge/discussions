@@ -39,15 +39,21 @@ class ChannelsList extends Query
     {
         $query = Channel::queryForUser();
 
-        return $this->box ?
+        $query = $this->box ?
+            $query->whereHas('discussions', fn ($q) => $q->whereHas('box', fn ($q2) => $q2->where('box', $this->box))) :
+            $query->where(fn ($q) => $q->doesntHave('discussions')->orWhereHas('discussions', fn ($q1) => $q1->doesntHave('box')));
 
-            $query->whereHas('discussions', function($q){
-                $q->whereHas('box', fn($q2) => $q2->where('box', $this->box));
-            }) :
+        $search = $this->store('channel_search') ?: request('channel_search');
+        if ($search) {
+            $query->where('channels.name', 'like', '%' . $search . '%');
+        }
 
-            $query->where(
-                fn($q) => $q->doesntHave('discussions')->orWhereHas('discussions', fn($q1) => $q1->doesntHave('box'))
-            );
+        $filter = $this->store('filter') ?: request('filter', 'all');
+        if ($filter === 'unread') {
+            $query = $query->get()->filter(fn ($c) => $c->hasUnreadDiscussions());
+        }
+
+        return $query;
     }
 
     protected function channelsTitle($label, $rightButtons = null)
@@ -63,35 +69,37 @@ class ChannelsList extends Query
     public function render($channel)
     {
         $isActiveChannel = $channel->id == $this->activeChannelId;
+        $hasUnread = $channel->hasUnreadDiscussions();
 
-        // Avatar initial from channel name
-        $initial = strtoupper(substr($channel->display, 0, 1));
-
-        // Last message info
         $lastDiscussion = $channel->lastDiscussion;
         $lastMessageTime = $lastDiscussion ? $lastDiscussion->created_at->diffForHumans() : null;
-        $lastMessagePreview = $lastDiscussion ? \Str::limit($lastDiscussion->body, 40) : 'Aucun message';
+        $lastMessagePreview = $lastDiscussion ? \Str::limit(strip_tags($lastDiscussion->html ?? $lastDiscussion->summary ?? ''), 40) : __('discussions.no-message-yet');
 
         return _Rows(
-            // Channel header
             _Flex(
-                // Avatar circle with initial
+                // Channel icon avatar using custom icon + color
                 _Flex(
-                    _Html($initial)->class('text-white font-bold text-sm')
-                )->class('w-10 h-10 rounded-full bg-gradient-to-br from-level1 to-level2 flex items-center justify-center flex-shrink-0'),
+                    _Sax($channel->getIconName(), 18)->class('text-white'),
+                )->class('w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0')
+                 ->style('background-color: ' . $channel->getColorHex() . ';'),
 
                 // Channel info
                 _Rows(
                     _FlexBetween(
-                        _Html($channel->display)->class('font-semibold text-gray-900 text-sm'),
-                        $lastMessageTime ? _Html($lastMessageTime)->class('text-xs text-gray-500') : null
+                        _Flex(
+                            _Html($channel->display)->class('font-semibold text-gray-900 text-sm truncate'),
+                            $channel->is_private ? _Sax('lock', 12)->class('text-gray-400 flex-shrink-0') : null,
+                        )->class('gap-1 items-center min-w-0'),
+                        $lastMessageTime ? _Html($lastMessageTime)->class('text-xs text-gray-500 flex-shrink-0 ml-2') : null,
                     ),
-                    _Html($lastMessagePreview)->class('text-xs text-gray-600 mt-0.5')
+                    _FlexBetween(
+                        _Html($lastMessagePreview)->class('text-xs text-gray-600 mt-0.5 truncate'),
+                        $hasUnread ? _Html()->class('w-2 h-2 rounded-full bg-greenmain flex-shrink-0 ml-2 mt-1') : null,
+                    ),
                 )->class('flex-1 min-w-0 ml-3'),
 
-                // Expand icon for subjects
                 !$channel->subjects_count ? null :
-                    _Html()->icon(_Sax('arrow-down-1', 16))->class('text-gray-400 ml-2 flex-shrink-0')
+                    _Html()->icon(_Sax('arrow-down-1', 16))->class('text-gray-400 ml-2 flex-shrink-0'),
 
             )->class('cursor-pointer px-3 py-3 items-start'),
 
