@@ -12,6 +12,34 @@ class Channel extends Model
     use HasManyDiscussions,
         BelongsToTeamTrait;
 
+    protected $casts = [
+        'is_private' => 'boolean',
+    ];
+
+    public const DEFAULT_ICON = 'messages';
+    public const DEFAULT_COLOR = 'greenmain';
+
+    public const COLOR_HEX = [
+        'greenmain' => '#0a6e4e',
+        'blue'      => '#2563eb',
+        'purple'    => '#8b5cf6',
+        'red'       => '#ef4444',
+        'orange'    => '#f97316',
+        'yellow'    => '#eab308',
+        'teal'      => '#14b8a6',
+        'pink'      => '#ec4899',
+    ];
+
+    public function getIconName(): string
+    {
+        return $this->icon ?: self::DEFAULT_ICON;
+    }
+
+    public function getColorHex(): string
+    {
+        return self::COLOR_HEX[$this->color ?? self::DEFAULT_COLOR] ?? self::COLOR_HEX[self::DEFAULT_COLOR];
+    }
+
     public function subjects()
     {
         return $this->discussions()

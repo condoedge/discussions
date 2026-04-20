@@ -12,10 +12,68 @@ class Discussion extends Model
     use HasManyDiscussions,
         MorphManyFilesTrait;
 
+    protected $casts = [
+        'pinned_at' => 'datetime',
+    ];
+
     /* RELATIONS */
     public function channel()
     {
         return $this->belongsTo(Channel::class);
+    }
+
+    public function reactions()
+    {
+        return $this->hasMany(DiscussionReaction::class);
+    }
+
+    public function mentions()
+    {
+        return $this->hasMany(DiscussionMention::class);
+    }
+
+    public function pinnedBy()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'pinned_by');
+    }
+
+    public function isPinned(): bool
+    {
+        return $this->pinned_at !== null;
+    }
+
+    public function pin(): void
+    {
+        $this->pinned_at = now();
+        $this->pinned_by = auth()->id();
+        $this->save();
+    }
+
+    public function unpin(): void
+    {
+        $this->pinned_at = null;
+        $this->pinned_by = null;
+        $this->save();
+    }
+
+    public function toggleReaction(int $userId, string $emoji): void
+    {
+        $existing = $this->reactions()->where('user_id', $userId)->where('emoji', $emoji)->first();
+
+        if ($existing) {
+            $existing->delete();
+        } else {
+            $this->reactions()->create(['user_id' => $userId, 'emoji' => $emoji]);
+        }
+    }
+
+    public function reactionsGrouped(): \Illuminate\Support\Collection
+    {
+        return $this->reactions->groupBy('emoji')->map(fn ($group) => [
+            'emoji' => $group->first()->emoji,
+            'count' => $group->count(),
+            'me' => $group->contains('user_id', auth()->id()),
+        ])->values();
     }
 
     public function discussion()
