@@ -70,7 +70,7 @@ class ChannelsList extends Query
         // Last message info
         $lastDiscussion = $channel->lastDiscussion;
         $lastMessageTime = $lastDiscussion ? $lastDiscussion->created_at->diffForHumans() : null;
-        $lastMessagePreview = $lastDiscussion ? \Str::limit($lastDiscussion->body, 40) : 'Aucun message';
+        $lastMessagePreview = $lastDiscussion ? \Str::limit($lastDiscussion->body, 40) : __('discussions.no-messages');
 
         return _Rows(
             // Channel header
