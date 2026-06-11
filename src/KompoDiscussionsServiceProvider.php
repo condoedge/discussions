@@ -60,11 +60,16 @@ class KompoDiscussionsServiceProvider extends ServiceProvider
     protected function registerBroadcastChannels()
     {
         try {
+            // Congruent with ChannelPolicy: channel participation doesn't require an
+            // active team role (members can be cross-team), so participants of any of
+            // the team's channels are authorized too — otherwise their subscription
+            // 403s silently and they receive no live updates or whispers at all.
             Broadcast::channel('discussion.{teamId}', function ($user, $teamId) {
-                return $user->teams()->whereKey($teamId)
-                    ->wherePivotNull('terminated_at')
-                    ->wherePivotNull('suspended_at')
-                    ->exists();
+                return Channel::where('team_id', $teamId)->forUser($user->id)->exists()
+                    || $user->teams()->whereKey($teamId)
+                        ->wherePivotNull('terminated_at')
+                        ->wherePivotNull('suspended_at')
+                        ->exists();
             });
         } catch (\Throwable $e) {
             // Broadcasting driver not configured in this context (e.g. console); live refresh stays off

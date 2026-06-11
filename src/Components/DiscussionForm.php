@@ -78,8 +78,22 @@ class DiscussionForm extends ChatComposerForm
 
 		$discussion->broadcastSent();
 
-		// Own message bubble, no avatar - same as the panel's render()
-		return $discussion->cardWithActions(false);
+		// Own bubble, no avatar, no entrance animation: the optimistic temp bubble
+		// already animated in; the swap to the persisted card should be seamless
+		return $discussion->cardWithActions(false, false);
+	}
+
+	/* TYPING INDICATOR (whispers on the already-authorized team channel) */
+
+	protected function typingWhisperChannel(): ?string
+	{
+		return $this->channel ? 'discussion.'.$this->channel->team_id : null;
+	}
+
+	protected function typingWhisperEvent(): string
+	{
+		// Scoped per discussion channel so typing in one channel doesn't show in others
+		return 'typing.'.$this->channelId;
 	}
 
 	/* COMPOSER (chat kit) - enter-to-send and the optimistic bubble come from the
@@ -87,8 +101,12 @@ class DiscussionForm extends ChatComposerForm
 
 	protected function composerInput()
 	{
+		// Short debounce: commits the value to the form model quickly so the classic
+		// (attachment) submit serializes current text; background sends read the
+		// editor directly and don't depend on it
 		return _CKEditor()->name('html')
 			->class('chat-composer-input mb-0 flex-1 min-w-0')
+			->debounce(100)
 			->focusOnLoad();
 	}
 

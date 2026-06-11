@@ -6,6 +6,7 @@ use Condoedge\Utils\Kompo\Chat\ChatBubbleRenderer;
 use Condoedge\Utils\Models\Files\MorphManyFilesTrait;
 use Condoedge\Utils\Models\Model;
 use Kompo\Discussions\Events\DiscussionSent;
+use Kompo\Discussions\Events\DiscussionsRead;
 use Kompo\Discussions\Models\Traits\HasManyDiscussions;
 
 class Discussion extends Model
@@ -93,6 +94,33 @@ class Discussion extends Model
         $mr->discussion_id = $this->id;
         $mr->read_at = now();
         $mr->save();
+
+        static::queueReadBroadcast($this->channel->team_id ?? currentTeam()->id);
+    }
+
+    /**
+     * Marking happens once per unread message inside a render loop; the broadcast
+     * is batched to ONE DiscussionsRead event per team after the response is sent,
+     * so senders' panels can live-refresh their read receipts without a pusher storm.
+     */
+    protected static $pendingReadBroadcasts = [];
+
+    protected static function queueReadBroadcast($teamId)
+    {
+        if (in_array($teamId, static::$pendingReadBroadcasts)) {
+            return;
+        }
+
+        if (empty(static::$pendingReadBroadcasts)) {
+            app()->terminating(function () {
+                foreach (static::$pendingReadBroadcasts as $tid) {
+                    broadcast(new DiscussionsRead($tid))->toOthers();
+                }
+                static::$pendingReadBroadcasts = [];
+            });
+        }
+
+        static::$pendingReadBroadcasts[] = $teamId;
     }
 
     public function setSummaryFrom($text)
@@ -118,7 +146,10 @@ class Discussion extends Model
         // The leading dot tells Laravel Echo to use the name verbatim instead of
         // prepending its default "App.Events" namespace; it must match broadcastAs()
         return $teamIds->filter()->unique()->mapWithKeys(fn($teamId) => [
-            'discussion.'.$teamId => ['.'.DiscussionSent::BROADCAST_NAME],
+            'discussion.'.$teamId => [
+                '.'.DiscussionSent::BROADCAST_NAME,
+                '.'.DiscussionsRead::BROADCAST_NAME,
+            ],
         ])->toArray();
     }
 
@@ -134,7 +165,7 @@ class Discussion extends Model
     }
 
     /* ELEMENTS */
-    public function cardWithActions($withImg = true)
+    public function cardWithActions($withImg = true, $animate = null)
     {
         $isOwn = $this->isOwn();
         $renderer = new ChatBubbleRenderer();
@@ -151,10 +182,11 @@ class Discussion extends Model
         $timestamp = $this->created_at->format('H:i');
         $footer = $isOwn ? $this->readReceiptAvatars() : null;
         $unread = !$this->read;
-        $animate = !$this->created_at || $this->created_at->diffInSeconds(now()) < 5;
+        $animate = $animate ?? (!$this->created_at || $this->created_at->diffInSeconds(now()) < 5);
+        $read = $isOwn && $this->readers()->isNotEmpty();
 
         return $isOwn
-            ? $renderer->ownBubble($content, $authorName, $avatar, $timestamp, $footer, $unread, false, $animate)
+            ? $renderer->ownBubble($content, $authorName, $avatar, $timestamp, $footer, $unread, false, $animate, $read)
             : $renderer->otherBubble($content, $authorName, $avatar, $timestamp, $footer, $unread, false, $animate);
     }
 
@@ -164,14 +196,33 @@ class Discussion extends Model
             return null;
         }
 
-        return _Flex(
-            $this->files->map(function($file) use ($isOwn) {
-                return $file->linkEl()
-                    ->href($file->link)
-                    ->attr(['download' => $file->name])
-                    ->class($isOwn ? 'text-white' : 'text-gray-900');
-            })
-        )->class('mt-2 flex-wrap gap-2');
+        $images = $this->files->filter->is_image;
+        $others = $this->files->reject->is_image;
+
+        return _Rows(
+            // Images render inline; clicking opens the shared image-preview modal.
+            // Kompo\Img has no interactions, so the click lives on a _Div wrapper
+            // (layouts support onClick — same pattern as the channel list items)
+            !$images->count() ? null : _Flex(
+                $images->map(fn($file) => _Div(
+                    _Img(fileRoute($file->getMorphClass(), $file->id))
+                        ->class('chat-attachment-image rounded-xl object-cover')
+                )->class('cursor-pointer')
+                ->onClick(fn($e) => $e->get('image.preview', [
+                    'id' => $file->id,
+                    'type' => $file->getMorphClass(),
+                ])->inModal()))
+            )->class('mt-2 flex-wrap gap-2'),
+
+            !$others->count() ? null : _Flex(
+                $others->map(function($file) use ($isOwn) {
+                    return $file->linkEl()
+                        ->href($file->link)
+                        ->attr(['download' => $file->name])
+                        ->class($isOwn ? 'text-white' : 'text-gray-900');
+                })
+            )->class('mt-2 flex-wrap gap-2'),
+        );
     }
 
     // Small reader avatars (Messenger style), rendered beside the timestamp

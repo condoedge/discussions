@@ -107,11 +107,19 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
      */
     public static function withComposer($channelId, $box = null)
     {
+        $channel = Channel::find($channelId);
+
         return _Rows(
             new static([
                 'channel_id' => $channelId,
                 'box' => $box,
             ]),
+
+            // Shows when someone whispers typing on this discussion channel
+            !$channel ? null : \Condoedge\Utils\Kompo\Chat\ChatScripts::typingIndicator(
+                'discussion.'.$channel->team_id,
+                'typing.'.$channelId,
+            ),
 
             _Div(
                 new DiscussionForm(null, [
