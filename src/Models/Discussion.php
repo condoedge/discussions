@@ -165,7 +165,7 @@ class Discussion extends Model
 
     public static function pusherRefresh($teamIds = null)
     {
-        $teamIds = collect($teamIds ?: [currentTeam()->id]);
+        $teamIds = collect($teamIds ?: [currentTeam()?->id]);
 
         // The leading dot tells Laravel Echo to use the name verbatim instead of
         // prepending its default "App.Events" namespace; it must match broadcastAs()

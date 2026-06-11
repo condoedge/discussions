@@ -25,7 +25,7 @@ class DiscussionForm extends ChatComposerForm
 		$this->channel = Channel::find($this->channelId);
 
 		// authorize() only guards submit/ajax in Kompo; this also guards the GET render
-		if ($this->channel && !auth()->user()->can('view', $this->channel)) {
+		if ($this->channel && !auth()->user()?->can('view', $this->channel)) {
 			abort(403);
 		}
 	}
