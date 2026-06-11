@@ -71,6 +71,11 @@ class KompoDiscussionsServiceProvider extends ServiceProvider
                         ->wherePivotNull('suspended_at')
                         ->exists();
             });
+
+            // Personal channel for the app-wide "new message" toasts
+            Broadcast::channel('discussion-user.{userId}', function ($user, $userId) {
+                return (int) $user->id === (int) $userId;
+            });
         } catch (\Throwable $e) {
             // Broadcasting driver not configured in this context (e.g. console); live refresh stays off
         }

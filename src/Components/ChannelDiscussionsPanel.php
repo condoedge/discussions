@@ -121,6 +121,9 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
                 'typing.'.$channelId,
             ),
 
+            // Suppresses this channel's own toasts while it's on screen
+            \Condoedge\Utils\Kompo\Chat\ChatScripts::setOpenChatChannel($channelId),
+
             _Div(
                 new DiscussionForm(null, [
                     'channel_id' => $channelId,

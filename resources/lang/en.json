@@ -1,5 +1,6 @@
 {
 	"discussions.add-members": "Add members",
+	"discussions.added-to-channel-notification": "You were added to the channel :channel",
 	"discussions.attachments": "Attachments",
 	"discussions.back": "Back",
 	"discussions.channel-name": "Channel name",
@@ -13,6 +14,7 @@
 	"discussions.name": "Name",
 	"discussions.new": "New",
 	"discussions.new-channel": "New channel",
+	"discussions.new-message": "New message",
 	"discussions.no-attachments": "No attachments",
 	"discussions.no-channels": "No channels",
 	"discussions.no-discussions": "No discussions",
@@ -25,5 +27,6 @@
 	"discussions.send": "Send",
 	"discussions.subject-optional": "Subject (optional)",
 	"discussions.title": "Discussions",
+	"discussions.view-discussion": "View discussion",
 	"discussions.you": "(you)"
 }

@@ -19,6 +19,12 @@
 	--chat-send-bg: #006241;                             /* level1 */
 }
 
+/* The toast stack mounts on <body>, outside the page scope above */
+#chat-toast-container {
+	--chat-toast-accent: #006241;                        /* level1 */
+	--chat-typing-dot-color: #006241;
+}
+
 .channel-subjects{
 	display: none;
 }

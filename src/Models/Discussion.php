@@ -64,6 +64,16 @@ class Discussion extends Model
         return (int) $this->added_by === (int) auth()->id();
     }
 
+    public static function unreadCountForUser($userId = null)
+    {
+        $userId = $userId ?: auth()->id();
+
+        return static::whereHas('channel', fn($q) => $q->forUser($userId))
+            ->where('added_by', '!=', $userId)
+            ->whereDoesntHave('reads', fn($q) => $q->where('added_by', $userId))
+            ->count();
+    }
+
     public function readers()
     {
         return $this->reads->where('added_by', '!=', $this->added_by)
@@ -112,11 +122,22 @@ class Discussion extends Model
         }
 
         if (empty(static::$pendingReadBroadcasts)) {
-            app()->terminating(function () {
+            $readerId = auth()->id();
+
+            app()->terminating(function () use ($readerId) {
                 foreach (static::$pendingReadBroadcasts as $tid) {
                     broadcast(new DiscussionsRead($tid))->toOthers();
                 }
                 static::$pendingReadBroadcasts = [];
+
+                // Authoritative badge update for the reader (all their tabs), sent
+                // right after the request that marked the messages read
+                if ($readerId) {
+                    broadcast(new \Kompo\Discussions\Events\DiscussionUnreadCount(
+                        $readerId,
+                        static::unreadCountForUser($readerId),
+                    ));
+                }
             });
         }
 
@@ -137,6 +158,9 @@ class Discussion extends Model
     public function broadcastSent()
     {
         broadcast(new DiscussionSent($this->channel->team_id, $this))->toOthers();
+
+        // Per-participant toast notification (author excluded server-side)
+        broadcast(new \Kompo\Discussions\Events\DiscussionNotification($this));
     }
 
     public static function pusherRefresh($teamIds = null)

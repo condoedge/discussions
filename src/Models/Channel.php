@@ -68,6 +68,15 @@ class Channel extends Model
             ->orderByDesc('last_discussion_max_created_at');
     }
 
+    public function scopeWithUnreadCount($query, $userId = null)
+    {
+        $userId = $userId ?: auth()->id();
+
+        $query->withCount(['discussions as unread_count' => fn($q) => $q
+            ->where('added_by', '!=', $userId)
+            ->whereDoesntHave('reads', fn($r) => $r->where('added_by', $userId))]);
+    }
+
     /* QUERIES */
     public static function queryForUser($userId = null)
     {

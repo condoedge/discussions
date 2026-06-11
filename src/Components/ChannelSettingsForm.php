@@ -34,9 +34,25 @@ class ChannelSettingsForm extends Modal
 		return !$this->model->id || auth()->user()->can('update', $this->model);
 	}
 
+	protected $memberIdsBeforeSave = [];
+
 	public function beforeSave()
 	{
 		$this->model->setTeamId();
+
+		$this->memberIdsBeforeSave = $this->model->id
+			? $this->model->users()->pluck('users.id')->all()
+			: [];
+	}
+
+	public function afterSave()
+	{
+		// Notify only NEWLY added members (the host app listens and creates
+		// its own notification); message arrivals don't notify anymore
+		$this->model->users()->pluck('users.id')
+			->diff($this->memberIdsBeforeSave)
+			->reject(fn($id) => (int) $id === (int) auth()->id())
+			->each(fn($id) => event(new \Kompo\Discussions\Events\MemberAddedToChannel($this->model, $id)));
 	}
 
 	public function response()

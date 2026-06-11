@@ -67,7 +67,7 @@ class DiscussionForm extends ChatComposerForm
 		$discussion = new Discussion();
 		$discussion->channel_id = $this->channelId;
 		$discussion->discussion_id = $this->discussionId;
-		$discussion->subject = $this->discussionId ? null : ($payload['subject'] ?: null);
+		// $discussion->subject = $this->discussionId ? null : ($payload['subject'] ?: null);
 		$discussion->html = $html;
 		$discussion->setSummaryFrom($html);
 		$discussion->save();
@@ -165,14 +165,14 @@ class DiscussionForm extends ChatComposerForm
 
 	protected function statusLink()
 	{
-		return $this->discussionId ?
+		// return $this->discussionId ?
 
-			_Html(__('discussions.replying-to').' -> '.$this->discussion->subject)
-				->class('text-xs text-gray-500 mb-1 px-1') :
+		// 	_Html(__('discussions.replying-to').' -> '.$this->discussion->subject)
+		// 		->class('text-xs text-gray-500 mb-1 px-1') :
 
-			_Input()->placeholder('discussions.subject-optional')->name('subject')
-				->class('discussion-subject-input mb-2')
-				->dontSubmitOnEnter();
+		// 	_Input()->placeholder('discussions.subject-optional')->name('subject')
+		// 		->class('discussion-subject-input mb-2')
+		// 		->dontSubmitOnEnter();
 	}
 
 	public function rules()

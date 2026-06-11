@@ -27,9 +27,15 @@ class ChannelsList extends Query
         $this->activeChannelId = $this->store('active_channel_id');
         $this->activeDiscussionId = $this->store('active_discussion_id');
 
-        // Listed channels can span several teams; subscribe to each of them
-        $this->pusherRefresh = Discussion::pusherRefresh(
-            Channel::forUser()->pluck('team_id')->all()
+        // Listed channels can span several teams; subscribe to each of them.
+        // The personal count event re-renders the list right after THIS user reads
+        // (DiscussionsRead goes toOthers, so it alone would leave their own unread
+        // pills stale until someone else's event).
+        $this->pusherRefresh = array_merge(
+            Discussion::pusherRefresh(Channel::forUser()->pluck('team_id')->all()),
+            ['discussion-user.'.auth()->id() => [
+                '.'.\Kompo\Discussions\Events\DiscussionUnreadCount::BROADCAST_NAME,
+            ]],
         );
 
         $this->initializeBox();
@@ -39,7 +45,7 @@ class ChannelsList extends Query
 
     public function query()
     {
-        $query = Channel::queryForUser();
+        $query = Channel::queryForUser()->withUnreadCount();
 
         return $this->box ?
             $query->whereHas('discussions', fn($q) => $q->inBox($this->box)) :
@@ -51,6 +57,7 @@ class ChannelsList extends Query
     public function render($channel)
     {
         $isActiveChannel = $channel->id == $this->activeChannelId;
+        $unreadCount = $channel->unread_count ?? 0;
 
         // Avatar initial from channel name
         $initial = strtoupper(substr($channel->display, 0, 1));
@@ -73,36 +80,30 @@ class ChannelsList extends Query
                 // Channel info
                 _Rows(
                     _FlexBetween(
-                        _Html($channel->display)->class('font-semibold text-gray-900 text-sm'),
-                        $lastMessageTime ? _Html($lastMessageTime)->class('text-xs text-gray-500') : null
+                        _Html($channel->display)->class('text-sm '.($unreadCount ? 'font-bold text-gray-900' : 'font-semibold text-gray-900')),
+                        $lastMessageTime ?
+                            _Html($lastMessageTime)->class('text-xs '.($unreadCount ? 'text-level1 font-semibold' : 'text-gray-500')) :
+                            null
                     ),
-                    _Html($lastMessagePreview)->class('text-xs text-gray-600 mt-0.5')
-                )->class('flex-1 min-w-0 ml-3'),
+                    _FlexBetween(
+                        _Html($lastMessagePreview)->class('text-xs mt-0.5 '.($unreadCount ? 'text-gray-900 font-medium' : 'text-gray-600')),
 
-                // Expand icon for subjects
-                !$channel->subjects_count ? null :
-                    _Html()->icon(_Sax('arrow-down-1', 16))->class('text-gray-400 ml-2 flex-shrink-0')
+                        // Unread count pill — the unmissable signal
+                        !$unreadCount ? null :
+                            _Html($unreadCount > 99 ? '99+' : $unreadCount)
+                                ->class('bg-level1 text-white text-xs font-bold rounded-full px-1.5 ml-2 shrink-0'),
+                    )->class('items-center')
+                )->class('flex-1 min-w-0 ml-3'),
 
             )->class('cursor-pointer px-3 py-3 items-start'),
 
-            // Subjects panel
-            !$channel->subjects_count ? null :
-                _Panel(
-                    $isActiveChannel ? new ChannelSubjectsList([
-                        'channel_id' => $channel->id,
-                        'active_discussion_id' => $this->activeDiscussionId,
-                        'box' => $this->box,
-                    ]) : null
-                )->class('channel-subjects bg-gray-50')
-                ->id($this->subjectsPanelId($channel->id))
+            // Subjects are muted for now: no expand icon, no per-subject sub-list
 
         )->class('hover:bg-gray-50 transition-colors border-b border-gray-100 channel-item')
         ->id('channel-'.$channel->id)
         ->class($isActiveChannel ? $this->activeClass : '')
         ->class($channel->hasUnreadDiscussions() ? 'bg-blue-50 ' . $this->unreadClass : '')
         ->onClick(function($e) use($channel){
-
-            $this->loadSubjects($e, $channel->id);
 
             // Mark the clicked channel as active client-side (the list itself doesn't reload)
             $e->run('() => {
