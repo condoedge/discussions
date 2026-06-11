@@ -21,6 +21,7 @@ class SingleDiscussionCard extends Query
     public $paginationType = 'Scroll';
 
     protected $discussionId;
+    protected $discussion;
 
     public function booted()
     {
@@ -31,7 +32,11 @@ class SingleDiscussionCard extends Query
     {
         $this->discussionId = $this->store('discussion_id') ?: $this->parameter('id');
         $this->discussion = Discussion::with('addedBy', 'files', 'read')
-                                ->find($this->discussionId);
+                                ->findOrFail($this->discussionId);
+
+        if (!auth()->user()->can('view', $this->discussion->channel)) {
+            abort(403);
+        }
 
         $this->id('discussion-card-'.$this->discussionId);
         $this->itemsWrapperClass .= ' discussion-scroll-'.$this->discussionId;
@@ -40,7 +45,7 @@ class SingleDiscussionCard extends Query
     public function query()
     {
         return $this->discussion->discussions()
-            ->with('addedBy', 'files', 'read')
+            ->with('addedBy', 'files', 'read', 'reads.user')
             ->orderByDesc('created_at');
     }
 

@@ -2,16 +2,18 @@
 
 namespace Kompo\Discussions\Models;
 
-use Kompo\Discussions\Models\Traits\HasManyDiscussions;
-use App\Models\User;
 use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
+use Illuminate\Support\Facades\DB;
+use Kompo\Auth\Facades\UserModel;
+use Kompo\Discussions\Models\Traits\HasManyDiscussions;
 
 class Channel extends Model
 {
     use HasManyDiscussions,
         BelongsToTeamTrait;
 
+    /* RELATIONS */
     public function subjects()
     {
         return $this->discussions()
@@ -26,7 +28,7 @@ class Channel extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'members');
+        return $this->belongsToMany(UserModel::getClass(), 'members');
     }
 
     /* ATTRIBUTES */
@@ -36,47 +38,60 @@ class Channel extends Model
     }
 
     /* CALCULATED FIELDS */
-    public function getAllowedUserIds()
+    public function participants()
     {
-        return $this->users()->pluck('users.id')->concat([$this->user_id]);
+        return collect([$this->addedBy])
+            ->concat($this->users)
+            ->filter()
+            ->unique('id')
+            ->values();
     }
 
-    /* QUERIES */
-    public static function withBasicInfo()
+    public function hasParticipant($userId)
     {
-        return static::with('lastDiscussion.addedBy', 'lastDiscussion.read');
-    }
-
-    public static function queryForUser($userId = null)
-    {
-        $userId = $userId ?: auth()->id();
-
-        $userChannelsIds = self::where('added_by', $userId)
-            ->orWhereHas('users', function ($query) use ($userId) {
-                $query->where('users.id', $userId);
-            })->pluck('channels.id');
-
-        return Channel::whereIn('channels.id', $userChannelsIds)
-            ->withCount('subjects')
-            ->with('lastDiscussion.addedBy', 'lastDiscussion.read')
-            ->ordered();
+        return (int) $this->added_by === (int) $userId
+            || $this->users()->where('users.id', $userId)->exists();
     }
 
     /* SCOPES */
+    public function scopeForUser($query, $userId = null)
+    {
+        $userId = $userId ?: auth()->id();
+
+        $query->where(fn($q) => $q->where('added_by', $userId)
+            ->orWhereHas('users', fn($q2) => $q2->where('users.id', $userId)));
+    }
+
     public function scopeOrdered($query)
     {
         $query->withMax('lastDiscussion', 'created_at')
             ->orderByDesc('last_discussion_max_created_at');
     }
 
-    /* ACTIONS */
-    public function delete()
+    /* QUERIES */
+    public static function queryForUser($userId = null)
     {
-        $this->discussions->each->delete();
-        $this->members->each->delete();
-
-        parent::delete();
+        return static::forUser($userId)
+            ->withCount('subjects')
+            ->with('lastDiscussion.addedBy', 'lastDiscussion.read')
+            ->ordered();
     }
 
+    /* ACTIONS */
+    public function deletable()
+    {
+        // Kompo's delete handler checks deletable() before the policy; keep both aligned
+        // (the inherited BelongsToTeamTrait version allows any same-team user)
+        return auth()->user() && auth()->user()->can('delete', $this);
+    }
 
+    public function delete()
+    {
+        DB::transaction(function () {
+            $this->discussions->each->delete();
+            $this->members->each->delete();
+
+            parent::delete();
+        });
+    }
 }

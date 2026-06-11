@@ -3,6 +3,7 @@
 namespace Kompo\Discussions\Models;
 
 use Condoedge\Utils\Models\Model;
+use Kompo\Auth\Facades\UserModel;
 
 class DiscussionRead extends Model
 {
@@ -13,6 +14,6 @@ class DiscussionRead extends Model
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class, 'added_by');
+        return $this->belongsTo(UserModel::getClass(), 'added_by');
     }
 }

@@ -3,7 +3,6 @@
 namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Models\Channel;
-use Kompo\Discussions\Models\Discussion;
 use Condoedge\Utils\Kompo\Common\Query;
 
 class ChannelSubjectsList extends Query
@@ -21,25 +20,27 @@ class ChannelSubjectsList extends Query
     public $unreadClass = 'font-semibold';
 
     protected $channelId;
+    protected $channel;
     protected $activeDiscussionId;
 
     public function created()
     {
+        $this->channelId = $this->store('channel_id') ?: $this->parameter('id');
+        $this->channel = Channel::findOrFail($this->channelId);
+        $this->activeDiscussionId = $this->store('active_discussion_id');
+
+        if (!auth()->user()->can('view', $this->channel)) {
+            abort(403);
+        }
+
         $this->initializeBox();
     }
 
     public function query()
     {
-        $this->channelId = $this->store('channel_id') ?: $this->parameter('id');
-        $this->activeDiscussionId = $this->store('activeDiscussionId');
-
-        $query = Channel::find($this->channelId)->subjects()->with('read', 'lastDiscussion.read');
-
-        return $this->box ?
-
-            $query->whereHas('box', fn($q) => $q->where('box', $this->box)) :
-
-            $query->doesntHave('box');
+        return $this->channel->subjects()
+            ->inBox($this->box)
+            ->with('read', 'lastDiscussion.read');
     }
 
     public function render($discussion)
@@ -59,5 +60,4 @@ class ChannelSubjectsList extends Query
                 $e->activate();
             });
     }
-
 }

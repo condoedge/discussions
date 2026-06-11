@@ -3,6 +3,7 @@
 namespace Kompo\Discussions\Components;
 
 use Illuminate\Support\Str;
+use Kompo\Discussions\Models\DiscussionBox;
 
 trait DiscussionBoxTrait
 {
@@ -18,9 +19,8 @@ trait DiscussionBoxTrait
     protected function initializeBox()
     {
         $this->box = $this->store('box') ?: $this->getBoxFromRoute();
-        
-        $this->setRoutes();
 
+        $this->setRoutes();
     }
 
     protected function setRoutes()
@@ -29,8 +29,8 @@ trait DiscussionBoxTrait
         $this->routeChannel = 'channel';
         $this->routeChannelSubjects = 'channel-subjects';
 
-
-        $suffix = $this->box == 1 ? $this->suffixArchive : ($this->box == 2 ? $this->suffixTrash : '');
+        $suffix = $this->box == DiscussionBox::BOX_ARCHIVE ? $this->suffixArchive :
+                    ($this->box == DiscussionBox::BOX_TRASH ? $this->suffixTrash : '');
 
         $this->routeDiscussions .= $suffix;
         $this->routeChannel .= $suffix;
@@ -39,11 +39,14 @@ trait DiscussionBoxTrait
 
     protected function getBoxFromRoute()
     {
-        $routeName = request()->route()->getName();
+        $routeName = optional(request()->route())->getName();
 
-        return Str::endsWith($routeName, $this->suffixArchive) ? 1 : (
-            Str::endsWith($routeName, $this->suffixTrash) ? 2 : null
+        if (!$routeName) {
+            return null;
+        }
+
+        return Str::endsWith($routeName, $this->suffixArchive) ? DiscussionBox::BOX_ARCHIVE : (
+            Str::endsWith($routeName, $this->suffixTrash) ? DiscussionBox::BOX_TRASH : null
         );
     }
-
 }

@@ -3,6 +3,7 @@
 namespace Kompo\Discussions\Models;
 
 use Condoedge\Utils\Models\Model;
+use Kompo\Auth\Facades\UserModel;
 
 class Member extends Model
 {
@@ -13,6 +14,6 @@ class Member extends Model
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class);
+        return $this->belongsTo(UserModel::getClass());
     }
 }

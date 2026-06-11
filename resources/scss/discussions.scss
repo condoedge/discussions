@@ -8,6 +8,51 @@
 	}
 }
 
+/* Full-height chat layout.
+   The page must fill the area below the host app's navbar instead of the whole
+   viewport (100vh columns used to overflow below the fold, hiding the send box).
+   The chain below stretches every wrapper between the scrollable <main> and the
+   page, then lets the Kompo query grid (.vlQuery row minmax(0,1fr)) shrink the
+   message list so the send form always stays visible. */
+.kompoScrollableContent:has(.discussions-page) {
+	padding: 0 !important;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Stretch only the wrappers on the way to the page (kompo view container, vlForm).
+   Note: flex-basis 0 deliberately supersedes the host's
+   '.kompoScrollableContent > div { height:1px; min-height:100% }' rule. */
+.kompoScrollableContent:has(.discussions-page) > div:has(.discussions-page),
+.kompoScrollableContent:has(.discussions-page) *:has(> .discussions-page) {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.discussions-page {
+	flex: 1 1 0;
+	min-height: 0;
+}
+
+/* The panel content wrapper rendered by vue-kompo's FormPanel has no CSS class
+   (only an animation class after content swaps), so it can only be targeted as
+   a direct-child div; .vlPanelClose is position:absolute and unaffected. */
+.discussions-page #channel-view-panel > div:not(.vlPanelClose) {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.discussions-page #channel-view-panel > div:not(.vlPanelClose) > .vlQuery,
+.discussions-sidebar > .vlQuery {
+	flex: 1 1 0;
+	min-height: 0;
+}
+
 /* Responsive CSS */
 #channel-view-panel{
 	.vlPanelClose{
@@ -19,7 +64,8 @@
 	#channel-view-panel{
   		display: none;
   		&.vlPanelNotEmpty{
-  			display: block;
+  			// flex (not block) so the full-height column chain keeps working on mobile
+  			display: flex;
   		}
   		.vlPanelClose{
 			display: block;
@@ -27,16 +73,6 @@
 			right: 0.75rem;
 		}
 	}
-}
-
-/* MESSAGES MESSENGER STYLE */
-.message-actions {
-	transition: opacity 0.2s ease-in-out;
-}
-
-.flex-row-reverse:hover .message-actions,
-.flex-row:hover .message-actions {
-	opacity: 1 !important;
 }
 
 /* Message bubbles - make CKEditor content look good in bubbles */
@@ -74,4 +110,3 @@
 		font-weight: 600;
 	}
 }
-

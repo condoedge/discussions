@@ -8,7 +8,23 @@ use Kompo\Auth\Facades\UserModel;
 
 class ChannelSettingsForm extends Form
 {
+	public const AVAILABLE_USERS_LIMIT = 100;
+
 	public $model = Channel::class;
+
+	public function created()
+	{
+		// authorize() only guards submit/ajax in Kompo; this also guards the GET render
+		if (!$this->authorize()) {
+			abort(403);
+		}
+	}
+
+	public function authorize()
+	{
+		// Creating a new channel is open to any team member; editing requires being a participant
+		return !$this->model->id || auth()->user()->can('update', $this->model);
+	}
 
 	public function beforeSave()
 	{
@@ -34,7 +50,7 @@ class ChannelSettingsForm extends Form
 					),
 	        		_Rows(
 		        		_MiniTitle('discussions.owner')->class('mb-3'),
-						_Html('<span class="vlTagOutlined">'.auth()->user()->name.'</span>'),
+						_Html('<span class="vlTagOutlined">'.($this->model->addedBy->name ?? auth()->user()->name).'</span>'),
 					),
 	        	)->class('flex-auto'),
 				$this->model->id ?
@@ -65,19 +81,25 @@ class ChannelSettingsForm extends Form
 		}
 
 		$users = currentTeam()->users()->where('users.id', '!=', auth()->user()->id)
-			->take(100)->search($search)
+			->take(static::AVAILABLE_USERS_LIMIT)->search($search)
 			->get();
 
 		return UserModel::buildDisambiguatedOptions($users);
 	}
 
-	public function retrieveUsers($users)
+	public function retrieveUsers($user)
 	{
-		return [$users->id => _Html($users->name)];
+		return [$user->id => _Html($user->name)];
 	}
 
 	public function getChannel($id)
 	{
+		$channel = Channel::findOrFail($id);
+
+		if (!auth()->user()->can('view', $channel)) {
+			abort(403);
+		}
+
 		return new ChannelDiscussionsPanel([
             'channel_id' => $id,
         ]);

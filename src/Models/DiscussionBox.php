@@ -5,7 +5,10 @@ namespace Kompo\Discussions\Models;
 use Condoedge\Utils\Models\Model;
 
 class DiscussionBox extends Model
-{    
+{
+    public const BOX_ARCHIVE = 1;
+    public const BOX_TRASH = 2;
+
     public function discussion()
     {
         return $this->belongsTo(Discussion::class);
@@ -14,16 +17,11 @@ class DiscussionBox extends Model
     /* SCOPES */
     public function scopeArchive($query)
     {
-        $query->where('box', 1);
+        $query->where('box', static::BOX_ARCHIVE);
     }
-    
+
     public function scopeTrash($query)
     {
-        $query->where('box', 2);
-    }
-    
-    public function scopeNotTrash($query)
-    {
-        $query->where('box', '<>', 2);
+        $query->where('box', static::BOX_TRASH);
     }
 }

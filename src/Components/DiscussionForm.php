@@ -2,10 +2,8 @@
 
 namespace Kompo\Discussions\Components;
 
-use App\Models\Activity;
 use Kompo\Discussions\Models\Channel;
 use Kompo\Discussions\Models\Discussion;
-use App\View\Components\CKEditorExtended;
 use Condoedge\Utils\Kompo\Common\Form;
 
 class DiscussionForm extends Form
@@ -15,35 +13,44 @@ class DiscussionForm extends Form
 	protected $channelId;
 	protected $channel;
 	protected $discussionId;
+	protected $discussion;
 
 	public function created()
 	{
 		$this->discussionId = $this->parameter('discussion_id');
 		$this->discussion = Discussion::find($this->discussionId);
 
-		$this->channelId = $this->store('channel_id') ?: $this->discussion->channel_id;
+		$this->channelId = $this->store('channel_id') ?: $this->discussion?->channel_id;
 		$this->channel = Channel::find($this->channelId);
+
+		// authorize() only guards submit/ajax in Kompo; this also guards the GET render
+		if ($this->channel && !auth()->user()->can('view', $this->channel)) {
+			abort(403);
+		}
+	}
+
+	public function authorize()
+	{
+		return $this->channel && auth()->user()->can('view', $this->channel);
 	}
 
 	public function beforeSave()
 	{
 		$this->model->channel_id = $this->channelId;
 		$this->model->discussion_id = $this->discussionId;
+		$this->model->setSummaryFrom(request('html'));
 	}
 
 	public function afterSave()
 	{
 		if ($this->model->discussion_id) {
-			Discussion::findOrFail($this->model->discussion_id)->boxes()->delete();
+			Discussion::findOrFail($this->model->discussion_id)->reopenForAllUsers();
 		}
-
-		// $this->processMentions();
 	}
 
 	public function completed()
 	{
-		Discussion::pusherBroadcast();
-		$this->model->pushSentEvent();
+		$this->model->broadcastSent();
 	}
 
 	public function render()
@@ -93,6 +100,8 @@ class DiscussionForm extends Form
 						->toggleId('subject-input')
 						->class('absolute top-3 right-6 text-level1 text-lg')
 				)->id('subject-input'),
+				// Invisible second input: prevents the browser's implicit form
+				// submission on Enter when the subject input is the only visible field
 				_Input()->placeholder('patch')->name('_', false)->class('opacity-0')->style('z-index: -1;')
 			)->class('relative');
 	}
@@ -102,36 +111,5 @@ class DiscussionForm extends Form
 		return [
 			'html' => 'required_without:files'
 		];
-	}
-
-
-
-	protected function processMentions()
-	{
-		//new mentions
-		CKEditorExtended::parseText(request('html'), 'Discussion (ID'.$this->model->id.')')
-			->each(function($mention){
-
-				if(count($mention) == 3){
-
-					if($mention[2] == 'User')
-						$this->model->notify($mention[1]);
-
-				}elseif(count($mention) == 2){
-
-					//nothing for now
-
-				}
-			});
-
-		//recreate notifications if mentionned in old ones
-		// $this->model->getAllMentionnedUsers()->reject(
-        //     fn($userId) => $userId === auth()->user()->id
-        // )->each(function($userId){
-
-        // 	if(!$this->model->notifications()->unread()->where('user_id', $userId)->count())
-		// 		$this->model->notify($userId);
-
-        // });
 	}
 }

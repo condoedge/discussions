@@ -6,8 +6,18 @@ use Kompo\Discussions\Models\Channel;
 
 class ChannelPolicy
 {
-    public function view(\App\Models\User $user, Channel $channel)
+    public function view($user, Channel $channel)
     {
-        return Channel::queryForUser($user->id)->where('channels.id', $channel->id)->exists();
+        return $channel->hasParticipant($user->id);
+    }
+
+    public function update($user, Channel $channel)
+    {
+        return $channel->hasParticipant($user->id);
+    }
+
+    public function delete($user, Channel $channel)
+    {
+        return (int) $channel->added_by === (int) $user->id;
     }
 }

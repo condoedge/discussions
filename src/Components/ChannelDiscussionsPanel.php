@@ -19,6 +19,8 @@ class ChannelDiscussionsPanel extends Query
 
     public $paginationType = 'Scroll';
 
+    public $itemsWrapperClass = 'channel-scroll overflow-y-auto mini-scroll py-4 px-4';
+
     protected $channelId;
     protected $channel;
     protected $discussionId;
@@ -34,20 +36,17 @@ class ChannelDiscussionsPanel extends Query
         $this->channelId = $this->store('channel_id') ?: $this->parameter('id');
         $this->channel = Channel::find($this->channelId);
         $this->discussionId = $this->parameter('discussion_id');
-        $this->discussion = $this->discussionId ? Discussion::find($this->discussionId) : null;
+        $this->discussion = $this->discussionId ?
+            Discussion::with('box', 'addedBy', 'channel', 'read', 'files', 'reads.user')->find($this->discussionId) :
+            null;
 
-        //Security
         $securityChannel = $this->discussion ? $this->discussion->channel : $this->channel;
         if ($securityChannel && !auth()->user()->can('view', $securityChannel)) {
             abort(403);
         }
 
-        $this->itemsWrapperClass = 'channel-scroll overflow-y-auto mini-scroll py-4 px-4';
-        $this->itemsWrapperStyle = $this->discussionId ?
-                                    'height: calc(100vh - 140px);' :
-                                    'height: calc(100vh - 352px);';
-
-        $this->pusherRefresh = Discussion::pusherRefresh();
+        // Subscribe on the viewed channel's own team (it may differ from the user's current team)
+        $this->pusherRefresh = Discussion::pusherRefresh($securityChannel?->team_id);
 
         $this->initializeBox();
     }
@@ -57,16 +56,12 @@ class ChannelDiscussionsPanel extends Query
         if($this->discussionId)
             return [$this->discussion];
 
-        if($this->channel){
-            $query = $this->channel->discussions()
-                ->whereNull('discussion_id')
-                ->with('box', 'addedBy', 'discussions.addedBy', 'channel')
+        if($this->channel)
+            return $this->channel->discussions()
+                ->topLevel()
+                ->inBox($this->box)
+                ->with('box', 'addedBy', 'discussions.addedBy', 'channel', 'read', 'files', 'reads.user')
                 ->orderByDesc('created_at');
-
-            return $this->box ?
-                $query->whereHas('box', fn($q) => $q->where('box', $this->box)) :
-                $query->doesntHave('box');
-        }
     }
 
     public function top()
@@ -104,27 +99,12 @@ class ChannelDiscussionsPanel extends Query
 
     public function render($discussion)
     {
-        // Détermine si c'est un message de l'utilisateur actuel
-        $discussionUserId = $discussion->getAttributes()['added_by'] ?? $discussion->addedBy->id ?? null;
-        $isCurrentUser = (int)$discussionUserId === (int)auth()->id();
+        $isCurrentUser = $discussion->isOwn();
 
-        // Style messenger avec cards
         $flexDirection = $isCurrentUser ? 'flex-row-reverse' : 'flex-row';
         $alignItems = $isCurrentUser ? 'items-end' : 'items-start';
 
         $card = _Flex(
-            // Actions (cachées, visibles au hover)
-            // _Flex(
-            //     $discussion->isArchived ?
-            //         $this->discussionAction('archive-1', 'unarchiveDiscussion', $discussion) :
-            //         $this->discussionAction('archive-1', 'archiveDiscussion', $discussion),
-
-            //     $discussion->isTrashed ?
-            //         $this->discussionAction('trash', 'untrashDiscussion', $discussion) :
-            //         $this->discussionAction('trash', 'trashDiscussion', $discussion),
-            // )->class('message-actions opacity-0 transition-opacity flex gap-1'),
-
-            // Card du message avec bulle moderne
             _Rows(
                 $discussion->cardWithActions(!$isCurrentUser)
             )->class('max-w-2xl px-2')
@@ -147,53 +127,6 @@ class ChannelDiscussionsPanel extends Query
             ])
         )->id('channel-discussion-form')
         ->class('max-w-2xl mx-auto w-full pl-9');
-    }
-
-    protected function discussionAction($icon, $method, $discussion)
-    {
-        return _Link()->icon(_Sax($icon))->class('text-gray-600 ml-2')
-            ->balloon(ucfirst(str_replace('Discussion', '', $method)), 'up-right')
-            ->selfPost($method, [
-                'id' => $discussion->id,
-            ])->inAlert()
-            ->removeSelf();
-    }
-
-    public function archiveDiscussion($id)
-    {
-        $this->updateDiscussionBox($id, 1);
-
-        return 'discussions.discussion-archived';
-    }
-
-    public function unarchiveDiscussion($id)
-    {
-        $this->updateDiscussionBox($id, 0);
-
-        return 'discussions.discussion-removed-archive';
-    }
-
-    public function trashDiscussion($id)
-    {
-        $this->updateDiscussionBox($id, 2);
-
-        return 'discussions.discussion-trashed';
-    }
-
-    public function untrashDiscussion($id)
-    {
-        $this->updateDiscussionBox($id, 0);
-
-        return 'discussions.discussion-removed-trash';
-    }
-
-    protected function updateDiscussionBox($id, $box)
-    {
-        if($box){
-            Discussion::findOrFail($id)->updateBox($box);
-        }else{
-            Discussion::findOrFail($id)->box()->delete();
-        }
     }
 
     public function noItemsFound()

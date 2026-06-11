@@ -2,40 +2,29 @@
 
 namespace Kompo\Discussions\Policies;
 
+use Kompo\Discussions\Models\Discussion;
+
 class DiscussionPolicy
 {
-    public function viewAny($user)
+    public function view($user, Discussion $discussion)
     {
-        return true;
-    }
-
-    public function view($user, $discussion)
-    {
-        return true;
+        return $user->can('view', $discussion->channel);
     }
 
     public function create($user)
     {
+        // Channel-level access is checked where the target channel is known
         return true;
     }
 
-    public function update($user, $discussion)
+    public function update($user, Discussion $discussion)
     {
-        return true;
+        return (int) $discussion->added_by === (int) $user->id;
     }
 
-    public function delete($user, $discussion)
+    public function delete($user, Discussion $discussion)
     {
-        return true;
-    }
-
-    public function restore($user, $discussion)
-    {
-        return true;
-    }
-
-    public function forceDelete($user, $discussion)
-    {
-        return true;
+        return (int) $discussion->added_by === (int) $user->id
+            || $user->can('delete', $discussion->channel);
     }
 }

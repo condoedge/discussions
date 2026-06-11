@@ -9,6 +9,7 @@ class ProjectDiscussionThread extends SingleDiscussionCard
 
     public function left()
     {
-        
+        // No avatar in the embedded thread view
+        return null;
     }
 }

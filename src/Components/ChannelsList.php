@@ -13,7 +13,6 @@ class ChannelsList extends Query
 	public $perPage = 30;
 
     public $itemsWrapperClass = 'overflow-y-auto mini-scroll';
-    public $itemsWrapperStyle = 'height: calc(100vh - 182px)';
 
     public $paginationType = 'Scroll';
 
@@ -28,7 +27,10 @@ class ChannelsList extends Query
         $this->activeChannelId = $this->store('active_channel_id');
         $this->activeDiscussionId = $this->store('active_discussion_id');
 
-        $this->pusherRefresh = Discussion::pusherRefresh();
+        // Listed channels can span several teams; subscribe to each of them
+        $this->pusherRefresh = Discussion::pusherRefresh(
+            Channel::forUser()->pluck('team_id')->all()
+        );
 
         $this->initializeBox();
 
@@ -40,24 +42,10 @@ class ChannelsList extends Query
         $query = Channel::queryForUser();
 
         return $this->box ?
-
-            $query->whereHas('discussions', function($q){
-                $q->whereHas('box', fn($q2) => $q2->where('box', $this->box));
-            }) :
-
+            $query->whereHas('discussions', fn($q) => $q->inBox($this->box)) :
             $query->where(
-                fn($q) => $q->doesntHave('discussions')->orWhereHas('discussions', fn($q1) => $q1->doesntHave('box'))
+                fn($q) => $q->doesntHave('discussions')->orWhereHas('discussions', fn($q1) => $q1->inBox(null))
             );
-    }
-
-    protected function channelsTitle($label, $rightButtons = null)
-    {
-        return _FlexBetween(
-            _Html($label)
-                ->class('font-bold text-sm text-gray-500 leading-wide uppercase'),
-            $rightButtons
-        )->class('py-2 px-4 border-b border-gray-200');
-
     }
 
     public function render($channel)
@@ -70,7 +58,9 @@ class ChannelsList extends Query
         // Last message info
         $lastDiscussion = $channel->lastDiscussion;
         $lastMessageTime = $lastDiscussion ? $lastDiscussion->created_at->diffForHumans() : null;
-        $lastMessagePreview = $lastDiscussion ? \Str::limit($lastDiscussion->body, 40) : __('discussions.no-messages');
+        $lastMessagePreview = $lastDiscussion ?
+            ($lastDiscussion->summary ?: safeTruncate($lastDiscussion->html, 40)) :
+            __('discussions.no-messages');
 
         return _Rows(
             // Channel header
@@ -100,7 +90,7 @@ class ChannelsList extends Query
                 _Panel(
                     $isActiveChannel ? new ChannelSubjectsList([
                         'channel_id' => $channel->id,
-                        'activeDiscussionId' => $this->activeDiscussionId,
+                        'active_discussion_id' => $this->activeDiscussionId,
                         'box' => $this->box,
                     ]) : null
                 )->class('channel-subjects bg-gray-50')
@@ -114,13 +104,11 @@ class ChannelsList extends Query
 
             $this->loadSubjects($e, $channel->id);
 
-            // Marking the channel as active using js
+            // Mark the clicked channel as active client-side (the list itself doesn't reload)
             $e->run('() => {
                 setTimeout(() => {
-                    // Remove active class from all channels
                     $(".channel-item").removeClass("'.$this->activeClass.'");
 
-                    // Add active class to the clicked channel
                     const channelElement = $("#channel-'.$channel->id.'");
                     if(channelElement.length) channelElement.addClass("'.$this->activeClass.'");
                 }, 100);
@@ -138,6 +126,12 @@ class ChannelsList extends Query
 
     public function getChannelView($id)
     {
+        $channel = Channel::findOrFail($id);
+
+        if (!auth()->user()->can('view', $channel)) {
+            abort(403);
+        }
+
         return new ChannelDiscussionsPanel([
             'channel_id' => $id,
             'box' => $this->box,
@@ -158,5 +152,4 @@ class ChannelsList extends Query
     {
         return 'channel-subjects'.$channelId;
     }
-
 }
