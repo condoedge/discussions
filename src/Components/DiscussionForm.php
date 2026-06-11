@@ -2,11 +2,12 @@
 
 namespace Kompo\Discussions\Components;
 
+use Condoedge\Utils\Kompo\Chat\ChatBubbleRenderer;
+use Condoedge\Utils\Kompo\Chat\ChatComposerForm;
 use Kompo\Discussions\Models\Channel;
 use Kompo\Discussions\Models\Discussion;
-use Condoedge\Utils\Kompo\Common\Form;
 
-class DiscussionForm extends Form
+class DiscussionForm extends ChatComposerForm
 {
 	public $model = Discussion::class;
 
@@ -53,57 +54,107 @@ class DiscussionForm extends Form
 		$this->model->broadcastSent();
 	}
 
-	public function render()
+	/**
+	 * Background-send handler (kit selfPost): persists the message and returns the
+	 * rendered bubble, which replaces the optimistic temp item in the messages panel.
+	 */
+	protected function persistChatMessage(array $payload)
 	{
-		return _Rows(
-			$this->statusLink(),
-	        _CKEditor()->name('html')
-	        	->class('ckNoToolbar mb-0')
-	        	->focusOnLoad(),
-	        _FlexEnd2(
-				_MultiFile()->name('files')
-					->class('asUploadButton mb-0')
-					->extraAttributes([
-						'team_id' => currentTeam()->id,
-					]),
-				_SubmitButton('discussions.send')
-					->refresh(
-						$this->discussionId ?
-							('discussion-card-'.$this->discussionId) :
-							'channel-discussion-panel'
-					)
-			)->class('absolute bottom-4 right-6')
-		)->class('relative p-2')
-		->id('discussion-ckeditor'.$this->discussionId);
+		$html = $payload['html'] ?? null;
+
+		abort_if(!$html || !trim(strip_tags($html)), 422, __('discussions.message-required'));
+
+		$discussion = new Discussion();
+		$discussion->channel_id = $this->channelId;
+		$discussion->discussion_id = $this->discussionId;
+		$discussion->subject = $this->discussionId ? null : ($payload['subject'] ?: null);
+		$discussion->html = $html;
+		$discussion->setSummaryFrom($html);
+		$discussion->save();
+
+		if ($discussion->discussion_id) {
+			Discussion::findOrFail($discussion->discussion_id)->reopenForAllUsers();
+		}
+
+		$discussion->broadcastSent();
+
+		// Own message bubble, no avatar - same as the panel's render()
+		return $discussion->cardWithActions(false);
+	}
+
+	/* COMPOSER (chat kit) - enter-to-send and the optimistic bubble come from the
+	   kit's shared wiring (ChatScripts::initComposer inside the parent render()) */
+
+	protected function composerInput()
+	{
+		return _CKEditor()->name('html')
+			->class('chat-composer-input mb-0 flex-1 min-w-0')
+			->focusOnLoad();
+	}
+
+	protected function panelSelector(): string
+	{
+		// Replies refresh the thread card; top-level messages refresh the channel panel
+		return $this->discussionId ?
+			'#discussion-card-'.$this->discussionId :
+			'#channel-discussion-panel';
+	}
+
+	protected function composerId(): string
+	{
+		// Kept verbatim: SingleDiscussionCard's reply button scrolls to this id
+		return 'discussion-ckeditor'.$this->discussionId;
+	}
+
+	protected function topSlot()
+	{
+		return $this->statusLink();
+	}
+
+	protected function attachmentElement()
+	{
+		return _MultiFile()->name('files')
+			->class('chat-composer-upload mb-0 shrink-0')
+			->extraAttributes([
+				'team_id' => currentTeam()->id,
+			]);
+	}
+
+	protected function sendButtonLabel(): string
+	{
+		return 'discussions.send';
+	}
+
+	protected function requireContentSelectors(): array
+	{
+		// File chips count as content so attachment-only sends pass the empty-send guard
+		return ['.chat-composer-upload .vlCustomLabel', '.discussion-composer-upload .vlCustomLabel'];
+	}
+
+	protected function optimisticEnabled(): bool
+	{
+		// Replies render inside a SingleDiscussionCard with its own items root; they
+		// keep the plain (non-optimistic) send
+		return !$this->discussionId;
+	}
+
+	protected function optimisticBubbleHtml(): string
+	{
+		// Kit own-bubble markup with the ck-content classes so the temp bubble is
+		// visually identical to the persisted one rendered by cardWithActions()
+		return (new ChatBubbleRenderer())->ownBubbleTemplate(auth()->user()->name, null, 'ck ck-content leading-relaxed');
 	}
 
 	protected function statusLink()
 	{
-		$textClass = 'block text-right text-sm text-gray-500';
-
 		return $this->discussionId ?
 
 			_Html(__('discussions.replying-to').' -> '.$this->discussion->subject)
-				->class($textClass)->class('-mt-6 mb-1') :
+				->class('text-xs text-gray-500 mb-1 px-1') :
 
-			_Rows(
-				_Link('')->icon('icon-plus')
-					->toggleId('subject-input')
-					->class($textClass)->class('py-4 absolute top-0 right-2'),
-				_Div(
-					_Rows(
-						_Input()->placeholder('discussions.subject-optional')->name('subject')
-							->class('text-lg w-full')
-							->dontSubmitOnEnter(),
-					)->class('absolute top-0 right-0 w-full'),
-					_Link()->icon('icon-times')
-						->toggleId('subject-input')
-						->class('absolute top-3 right-6 text-level1 text-lg')
-				)->id('subject-input'),
-				// Invisible second input: prevents the browser's implicit form
-				// submission on Enter when the subject input is the only visible field
-				_Input()->placeholder('patch')->name('_', false)->class('opacity-0')->style('z-index: -1;')
-			)->class('relative');
+			_Input()->placeholder('discussions.subject-optional')->name('subject')
+				->class('discussion-subject-input mb-2')
+				->dontSubmitOnEnter();
 	}
 
 	public function rules()

@@ -2,34 +2,24 @@
 
 namespace Kompo\Discussions\Components;
 
-use Kompo\Discussions\Components\Traits\ScrollToOnLoadTrait;
 use Kompo\Discussions\Models\Channel;
 use Kompo\Discussions\Models\Discussion;
-use Condoedge\Utils\Kompo\Common\Query;
+use Condoedge\Utils\Kompo\Chat\ChatMessagesQuery;
 
-class ChannelDiscussionsPanel extends Query
+class ChannelDiscussionsPanel extends ChatMessagesQuery
 {
-    use DiscussionBoxTrait,
-        ScrollToOnLoadTrait;
+    use DiscussionBoxTrait;
 
     public $id = 'channel-discussion-panel';
 
-    public $topPagination = true;
-    public $bottomPagination = false;
-
-    public $paginationType = 'Scroll';
-
-    public $itemsWrapperClass = 'channel-scroll overflow-y-auto mini-scroll py-4 px-4';
+    // Kit recipe (p-6 + [&>div] gap/col-reverse) with 'channel-scroll' kept for existing
+    // references (SingleDiscussionCard's reply scrollTo container)
+    public $itemsWrapperClass = 'channel-scroll [&>div]:gap-4 [&>div]:flex [&>div]:flex-col-reverse p-6 overflow-y-auto mini-scroll flex-1 min-h-0';
 
     protected $channelId;
     protected $channel;
     protected $discussionId;
     protected $discussion;
-
-    public function booted()
-    {
-        $this->activateScroll('#discussion-card-', '.channel-scroll');
-    }
 
     public function created()
     {
@@ -99,34 +89,43 @@ class ChannelDiscussionsPanel extends Query
 
     public function render($discussion)
     {
-        $isCurrentUser = $discussion->isOwn();
-
-        $flexDirection = $isCurrentUser ? 'flex-row-reverse' : 'flex-row';
-        $alignItems = $isCurrentUser ? 'items-end' : 'items-start';
-
-        $card = _Flex(
-            _Rows(
-                $discussion->cardWithActions(!$isCurrentUser)
-            )->class('max-w-2xl px-2')
-
-        )->class('mb-4 gap-2 ' . $flexDirection . ' ' . $alignItems);
+        // The kit bubble handles own/other alignment itself; the avatar shows on
+        // other users' messages only (matching the previous look)
+        $card = $discussion->cardWithActions(!$discussion->isOwn());
 
         if (!$discussion->read) {
-            $this->scrollToId = $this->scrollToId ?: $discussion->id;
             $discussion->markRead();
         }
 
         return $card;
     }
 
+    /**
+     * The messages panel + composer column. The composer lives OUTSIDE the Query
+     * on purpose: the send button's ->refresh() then only re-renders the messages,
+     * so typing is never interrupted and sends can pipeline back-to-back.
+     */
+    public static function withComposer($channelId, $box = null)
+    {
+        return _Rows(
+            new static([
+                'channel_id' => $channelId,
+                'box' => $box,
+            ]),
+
+            _Div(
+                new DiscussionForm(null, [
+                    'channel_id' => $channelId,
+                ])
+            )->id('channel-discussion-form')
+            ->class('w-full bg-white shrink-0')
+        )->class('discussions-chat-column');
+    }
+
     public function bottom()
     {
-        return $this->discussionId ? null : _Panel(
-            new DiscussionForm(null, [
-                'channel_id' => $this->channelId
-            ])
-        )->id('channel-discussion-form')
-        ->class('max-w-2xl mx-auto w-full pl-9');
+        // Remounts (and re-snaps) on every refresh of this Query
+        return $this->snapToBottomOnLoad();
     }
 
     public function noItemsFound()

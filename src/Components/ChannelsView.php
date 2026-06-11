@@ -63,13 +63,11 @@ class ChannelsView extends Form
 			)->class('discussions-sidebar bg-white border-r border-gray-200 h-full flex flex-col')
 			->style('width: 280px; flex-shrink: 0;'),
 
-			// Column 2: messages panel
+			// Column 2: messages panel + composer (the composer sits outside the
+			// messages Query so panel refreshes never interrupt typing)
 			_Panel(
 				$this->channelId ?
-					(new ChannelDiscussionsPanel([
-						'channel_id' => $this->channelId,
-						'box' => $this->box,
-					])) :
+					ChannelDiscussionsPanel::withComposer($this->channelId, $this->box) :
 					_Html(__('discussions.no-channels'))->class('text-gray-600 text-center p-10')
 			)->id('channel-view-panel')
 			->class('bg-gray-100 h-full flex-1 flex flex-col min-w-0'),

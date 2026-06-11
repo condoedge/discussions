@@ -132,10 +132,7 @@ class ChannelsList extends Query
             abort(403);
         }
 
-        return new ChannelDiscussionsPanel([
-            'channel_id' => $id,
-            'box' => $this->box,
-        ]);
+        return ChannelDiscussionsPanel::withComposer($id, $this->box);
     }
 
     protected function loadSubjects($komponent, $channelId)

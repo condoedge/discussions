@@ -1,3 +1,24 @@
+/* Shared chat kit (bubbles, composer pill, entrance animations) from condoedge/utils.
+   Resolves from both layouts: vendor/condoedge/discussions -> vendor/condoedge/utils
+   and the dev kompo/discussions -> kompo/utils. */
+@import '../../../utils/resources/scss/chat-kit';
+
+/* Discussions theme over the kit defaults: brand level1 green own-bubbles and
+   level3-tinted unread ring / new-message highlight / composer focus.
+   Scoped to the discussions surfaces (custom properties inherit) instead of :root,
+   so other chat-kit consumers in the same app keep their own theme. */
+.discussions-page,
+#channel-discussion-panel,
+[id^='discussion-card-'] {
+	--chat-bubble-own-bg: #006241;                       /* level1 */
+	--chat-bubble-unread-ring: rgba(109, 229, 170, 0.3); /* level3 @ 30% */
+	--chat-bubble-highlight: rgba(109, 229, 170, 0.4);   /* level3 @ 40% */
+	--chat-composer-focus-border: #6de5aa;               /* level3 */
+	--chat-composer-focus-ring: #d4e9e2;                 /* level4 */
+	--chat-typing-dot-color: #006241;                    /* level1 */
+	--chat-send-bg: #006241;                             /* level1 */
+}
+
 .channel-subjects{
 	display: none;
 }
@@ -53,6 +74,21 @@
 	min-height: 0;
 }
 
+/* The messages-panel + composer column (composer lives outside the Query so
+   refreshes don't remount it). Carries its own layout so it works both on the
+   initial render and when a channel switch swaps it into #channel-view-panel. */
+.discussions-chat-column {
+	flex: 1 1 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.discussions-chat-column > .vlQuery {
+	flex: 1 1 0;
+	min-height: 0;
+}
+
 /* Responsive CSS */
 #channel-view-panel{
 	.vlPanelClose{
@@ -71,6 +107,26 @@
 			display: block;
 			top: 0.75rem;
 			right: 0.75rem;
+		}
+	}
+}
+
+/* CHAT COMPOSER - discussions-specific: the optional subject line above the kit
+   composer pill (the pill, input, upload and send button styles come from the kit) */
+.discussion-subject-input {
+	input {
+		border: none;
+		border-bottom: 1px solid #e5e7eb;
+		border-radius: 0;
+		background: transparent;
+		font-size: 0.875rem;
+		padding: 0.25rem;
+		box-shadow: none;
+
+		&:focus {
+			border-bottom-color: #9ca3af;
+			outline: none;
+			box-shadow: none;
 		}
 	}
 }
@@ -97,8 +153,8 @@
 	}
 }
 
-/* White text in blue bubbles */
-.bg-level1 .ck-content {
+/* White text in own (level1 green) bubbles */
+.chat-bubble-own .ck-content {
 	color: white;
 
 	a {

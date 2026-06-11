@@ -3,20 +3,28 @@
 namespace Kompo\Discussions\Components;
 
 use Kompo\Discussions\Models\Channel;
-use Condoedge\Utils\Kompo\Common\Form;
+use Condoedge\Utils\Kompo\Common\Modal;
 use Kompo\Auth\Facades\UserModel;
 
-class ChannelSettingsForm extends Form
+class ChannelSettingsForm extends Modal
 {
 	public const AVAILABLE_USERS_LIMIT = 100;
 
 	public $model = Channel::class;
+
+	public $_Title = 'discussions.channel-settings';
+
+	protected $noHeaderButtons = true;
 
 	public function created()
 	{
 		// authorize() only guards submit/ajax in Kompo; this also guards the GET render
 		if (!$this->authorize()) {
 			abort(403);
+		}
+
+		if (!$this->model->id) {
+			$this->_Title = 'discussions.new-channel';
 		}
 	}
 
@@ -38,38 +46,19 @@ class ChannelSettingsForm extends Form
 		]);
 	}
 
-	public function render()
+	public function body()
 	{
-		return _Div(
+		return _Rows(
+			_Input('discussions.name')->placeholder('discussions.channel-name')->name('name'),
 
-	        _FlexBetween(
-	        	_Columns(
-	        		_Rows(
-		        		_MiniTitle('discussions.name')->class('mb-2'),
-						_Input()->placeholder('discussions.channel-name')->name('name')
-					),
-	        		_Rows(
-		        		_MiniTitle('discussions.owner')->class('mb-3'),
-						_Html('<span class="vlTagOutlined">'.($this->model->addedBy->name ?? auth()->user()->name).'</span>'),
-					),
-	        	)->class('flex-auto'),
-				$this->model->id ?
+			_MultiSelect('discussions.members')->placeholder(__('discussions.add-members'))->name('users')
+				->searchOptions(3, 'getAvailableTeamUsers', 'retrieveUsers'),
 
-					_Link('discussions.back')->icon('arrow-left')->selfGet('getChannel', [
-						'id' => $this->model->id
-					])->inPanel('channel-view-panel') :
+			_Html(__('discussions.owner').': '.($this->model->addedBy->name ?? auth()->user()->name))
+				->class('text-sm text-gray-500 mb-6'),
 
-					_Link('discussions.back')->icon('arrow-left')->href('discussions')
-			)->alignStart(),
-
-	        _MiniTitle('discussions.members')->class('mb-2'),
-
-			_MultiSelect()->placeholder(__('discussions.add-members'))->name('users')
-	        	->searchOptions(3, 'getAvailableTeamUsers', 'retrieveUsers'),
-
-			_SubmitButton('discussions.save'),
-
-		)->class('p-4');
+			_SubmitButton('discussions.save')->class('w-full'),
+		);
 	}
 
 	public function getAvailableTeamUsers($search)
@@ -90,19 +79,6 @@ class ChannelSettingsForm extends Form
 	public function retrieveUsers($user)
 	{
 		return [$user->id => _Html($user->name)];
-	}
-
-	public function getChannel($id)
-	{
-		$channel = Channel::findOrFail($id);
-
-		if (!auth()->user()->can('view', $channel)) {
-			abort(403);
-		}
-
-		return new ChannelDiscussionsPanel([
-            'channel_id' => $id,
-        ]);
 	}
 
 	public function rules()

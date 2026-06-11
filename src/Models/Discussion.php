@@ -2,6 +2,7 @@
 
 namespace Kompo\Discussions\Models;
 
+use Condoedge\Utils\Kompo\Chat\ChatBubbleRenderer;
 use Condoedge\Utils\Models\Files\MorphManyFilesTrait;
 use Condoedge\Utils\Models\Model;
 use Kompo\Discussions\Events\DiscussionSent;
@@ -135,58 +136,60 @@ class Discussion extends Model
     /* ELEMENTS */
     public function cardWithActions($withImg = true)
     {
-        $isCurrentUser = $this->isOwn();
+        $isOwn = $this->isOwn();
+        $renderer = new ChatBubbleRenderer();
 
-        $readByUsers = $isCurrentUser ? $this->readers() : collect();
+        // Theming note: the kit colors the bubble through CSS custom properties
+        // (discussions overrides --chat-bubble-own-bg to the brand level1 green in scss)
+        $content = [
+            _Html($this->cleanHtml())->class('ck ck-content leading-relaxed'),
+            $this->attachmentLinks($isOwn),
+        ];
 
-        return _Rows(
-            // Name and timestamp (outside bubble)
-            _Flex(
-                $withImg ? $this->profileImg() : null,
-                _Html($this->addedBy->name)->class('text-sm font-medium text-gray-900 ml-2')
-            )->class('items-center mb-1'),
+        $authorName = $this->addedBy->name;
+        $avatar = $withImg ? _ProfileImg($this->addedBy) : null;
+        $timestamp = $this->created_at->format('H:i');
+        $footer = $isOwn ? $this->readReceiptAvatars() : null;
+        $unread = !$this->read;
+        $animate = !$this->created_at || $this->created_at->diffInSeconds(now()) < 5;
 
-            // Message bubble
-            _Rows(
-                _Html($this->cleanHtml())->class($isCurrentUser
-                    ? 'text-white ck ck-content leading-relaxed'
-                    : 'text-gray-900 ck ck-content leading-relaxed'
-                ),
+        return $isOwn
+            ? $renderer->ownBubble($content, $authorName, $avatar, $timestamp, $footer, $unread, false, $animate)
+            : $renderer->otherBubble($content, $authorName, $avatar, $timestamp, $footer, $unread, false, $animate);
+    }
 
-                !$this->files->count() ? null :
-                    _Flex(
-                        $this->files->map(function($file) use ($isCurrentUser) {
-                            return $file->linkEl()
-                                ->href($file->link)
-                                ->attr(['download' => $file->name])
-                                ->class($isCurrentUser ? 'text-white' : 'text-gray-900');
-                        })
-                    )->class('mt-2 flex-wrap gap-2'),
+    protected function attachmentLinks($isOwn)
+    {
+        if (!$this->files->count()) {
+            return null;
+        }
 
-                // Timestamp inside the bubble, with read indicators
-                _Flex(
-                    _Html($this->created_at->format('H:i'))->class($isCurrentUser
-                        ? 'text-xs text-white text-opacity-80'
-                        : 'text-xs text-gray-500'
-                    ),
+        return _Flex(
+            $this->files->map(function($file) use ($isOwn) {
+                return $file->linkEl()
+                    ->href($file->link)
+                    ->attr(['download' => $file->name])
+                    ->class($isOwn ? 'text-white' : 'text-gray-900');
+            })
+        )->class('mt-2 flex-wrap gap-2');
+    }
 
-                    // Small reader avatars (Messenger style)
-                    !$isCurrentUser || !$readByUsers->count() ? null :
-                        _Flex(
-                            $readByUsers->take(3)->map(function($user) {
-                                return _Img(discussionsAvatarUrl($user, 16))
-                                    ->class('w-4 h-4 rounded-full border-2 border-white -ml-1')
-                                    ->attr(['title' => $user->name, 'alt' => $user->name]);
-                            })
-                        )->class('flex -space-x-1 ml-2')
-                )->class('mt-1 items-center justify-end')
+    // Small reader avatars (Messenger style), rendered beside the timestamp
+    protected function readReceiptAvatars()
+    {
+        $readByUsers = $this->readers();
 
-            )->class($isCurrentUser
-                ? 'bg-level1 text-white rounded-2xl rounded-tr-sm px-4 py-3 shadow-sm'
-                : 'bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm'
-            )->class($this->read ? '' : 'ring-2 ring-level3 ring-opacity-30')
+        if (!$readByUsers->count()) {
+            return null;
+        }
 
-        )->class('message-bubble-container group');
+        return _Flex(
+            $readByUsers->take(3)->map(function($user) {
+                return _Img(discussionsAvatarUrl($user, 16))
+                    ->class('w-4 h-4 rounded-full border-2 border-white -ml-1')
+                    ->attr(['title' => $user->name, 'alt' => $user->name]);
+            })
+        )->class('flex -space-x-1');
     }
 
     public function profileImg()

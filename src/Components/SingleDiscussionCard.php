@@ -10,7 +10,8 @@ class SingleDiscussionCard extends Query
 {
     use ScrollToOnLoadTrait;
 
-    public $itemsWrapperClass = 'overflow-y-auto mini-scroll';
+    // Kit spacing recipe so thread bubbles get the same rhythm as the channel panel
+    public $itemsWrapperClass = 'overflow-y-auto mini-scroll [&>div]:gap-4 [&>div]:flex [&>div]:flex-col-reverse px-4 py-2';
     public $itemsWrapperStyle = 'max-height: 320px';
 
     public $noItemsFound = '';
@@ -31,7 +32,7 @@ class SingleDiscussionCard extends Query
     public function created()
     {
         $this->discussionId = $this->store('discussion_id') ?: $this->parameter('id');
-        $this->discussion = Discussion::with('addedBy', 'files', 'read')
+        $this->discussion = Discussion::with('addedBy', 'files', 'read', 'reads.user')
                                 ->findOrFail($this->discussionId);
 
         if (!auth()->user()->can('view', $this->discussion->channel)) {
@@ -73,7 +74,8 @@ class SingleDiscussionCard extends Query
 
     public function render($discussion)
     {
-        $card = $discussion->cardWithActions()->id('discussion-card-'.$discussion->id);
+        // Avatar on other users' replies only, matching the channel panel
+        $card = $discussion->cardWithActions(!$discussion->isOwn())->id('discussion-card-'.$discussion->id);
 
         if (!$discussion->read) {
             $this->scrollToId = $this->scrollToId ?: $discussion->id;
