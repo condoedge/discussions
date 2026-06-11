@@ -84,7 +84,7 @@ class ChannelsList extends Query
                         $lastMessageTime ?
                             _Html($lastMessageTime)->class('text-xs '.($unreadCount ? 'text-level1 font-semibold' : 'text-gray-500')) :
                             null
-                    ),
+                    )->class('gap-4'),
                     _FlexBetween(
                         _Html($lastMessagePreview)->class('text-xs mt-0.5 '.($unreadCount ? 'text-gray-900 font-medium' : 'text-gray-600')),
 

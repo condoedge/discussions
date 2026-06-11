@@ -25,6 +25,12 @@
 	--chat-typing-dot-color: #006241;
 }
 
+/* Never show a zero badge, regardless of JS timing (the badge JS keeps
+   data-count in sync on every socket event) */
+#discussions-unread-badge[data-count='0'] {
+	display: none !important;
+}
+
 .channel-subjects{
 	display: none;
 }
