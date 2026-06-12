@@ -28,5 +28,7 @@
 	"discussions.subject-optional": "Sujet (optionnel)",
 	"discussions.title": "Discussions",
 	"discussions.view-discussion": "Voir la discussion",
-	"discussions.you": "(vous)"
+	"discussions.you": "(vous)",
+	"discussions.show-archived": "Afficher les archivés",
+	"discussions.show-deleted": "Afficher les supprimés"
 }
