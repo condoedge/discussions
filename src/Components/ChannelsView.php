@@ -42,12 +42,12 @@ class ChannelsView extends Form
 					_Html('discussions.title')->class('font-bold'),
 					_FlexEnd(
 						_Link()->icon(_Sax('archive-1'))
-							->balloon('discussions.show-archived')
+							->balloon('discussions.show-archived', 'down')
 	                		->href($this->box == DiscussionBox::BOX_ARCHIVE ? 'discussions' : 'discussions.archive')
 	                		->class('p-2')
 	                		->class($this->box == DiscussionBox::BOX_ARCHIVE ? 'bg-level3 text-white rounded-full' : 'text-gray-600'),
 						_Link()->icon(_Sax('trash'))
-							->balloon('discussions.show-deleted')
+							->balloon('discussions.show-deleted', 'down')
 	                		->href($this->box == DiscussionBox::BOX_TRASH ? 'discussions' : 'discussions.trash')
 	                		->class('p-2')
 	                		->class($this->box == DiscussionBox::BOX_TRASH ? 'bg-level3 text-white rounded-full' : 'text-gray-600'),
