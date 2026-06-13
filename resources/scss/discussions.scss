@@ -315,3 +315,31 @@ main:has(.discussions-page) > div:has(.discussions-page) {
 	-webkit-mask: url('/icons/send-2.svg') center / contain no-repeat;
 	mask: url('/icons/send-2.svg') center / contain no-repeat;
 }
+
+/* Composer emoji picker — smiley dropdown + emoji grid (opens upward, the composer sits at
+   the bottom of the screen). */
+.chat-emoji-grid {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 0.1rem;
+	padding: 0.4rem;
+	max-height: 13rem;
+	overflow-y: auto;
+}
+.chat-emoji-btn {
+	font-size: 1.35rem;
+	line-height: 1;
+	padding: 0.25rem;
+	border-radius: 0.4rem;
+	text-align: center;
+	cursor: pointer;
+}
+.chat-emoji-btn:hover {
+	background: #f3f4f6;
+}
+/* Open the emoji menu above the toggle (composer is pinned to the bottom). */
+.chat-emoji-toggle .vlDropdownMenu {
+	top: auto !important;
+	bottom: 100% !important;
+	margin-bottom: 0.4rem;
+}
