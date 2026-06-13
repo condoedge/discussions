@@ -111,6 +111,8 @@ class ChannelsView extends Form
 			// Marker so a server-rendered page that already has a channel (e.g. after a
 			// refresh on /discussions/{id}) stays on the full-screen conversation on mobile
 			// instead of falling back to the list (Kompo's .vlPanelNotEmpty is JS-only).
-			->class($this->channelId ? 'discussions-has-channel' : '');
+			// Use the explicit URL param, not $this->channelId: the latter defaults to the
+			// first channel on /discussions, which would wrongly hide the list on mobile.
+			->class($this->parameter('channel_id') ? 'discussions-has-channel' : '');
 	}
 }

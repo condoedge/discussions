@@ -294,3 +294,24 @@ main:has(.discussions-page) > div:has(.discussions-page) {
 		display: none !important;
 	}
 }
+
+/* Composer send button — round green icon button (paper plane) instead of the text pill. */
+.discussions-page button.chat-send-button {
+	width: 2.75rem;
+	height: 2.75rem;
+	min-width: 2.75rem;
+	padding: 0;
+	border-radius: 9999px;
+	font-size: 0; /* hide the text label */
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.discussions-page button.chat-send-button::after {
+	content: '';
+	width: 1.25rem;
+	height: 1.25rem;
+	background-color: #ffffff;
+	-webkit-mask: url('/icons/send-2.svg') center / contain no-repeat;
+	mask: url('/icons/send-2.svg') center / contain no-repeat;
+}

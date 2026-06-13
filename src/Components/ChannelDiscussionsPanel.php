@@ -62,8 +62,12 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
                 !$this->discussionId ?
                     _Flex(
                         // Back-to-list arrow — phones only (desktop keeps the 3-column layout).
-                        _Link()->icon('arrow-left')->href('discussions')
-                            ->class('discussions-back-mobile text-2xl text-level1 mr-3'),
+                        // Hard JS redirect: a plain ->href('discussions') gets marked vlActive
+                        // (the list route is a prefix of the current /discussions/{id}) and Kompo
+                        // then swallows the click, so the link never navigates.
+                        _Link()->icon('arrow-left')
+                            ->class('discussions-back-mobile text-2xl text-level1 mr-3')
+                            ->onClick->run("() => { window.location.assign('" . route('discussions') . "'); }"),
                         _Link($this->channel->name)->class('truncate')
                             ->href('discussions', [
                                 'channel_id' => $this->channelId,
