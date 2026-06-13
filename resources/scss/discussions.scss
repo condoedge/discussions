@@ -178,3 +178,168 @@
 		font-weight: 600;
 	}
 }
+
+/* ============================================================================
+   SISC-2 redesign — channel details slide, mobile single-column flow, list polish.
+   Brand colours use the same literals as the theme block above
+   (level1 #006241, level4 #d4e9e2, greendark #004A2D, danger #F6DAD8/#9C2B22).
+   ========================================================================== */
+
+/* Full-height fix — hosts that wrap the page in <main class="flex-1 ..."> (display:block)
+   collapse the chain above to height:0. Stretch that <main> and its inner wrapper too. */
+main:has(.discussions-page) {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+main:has(.discussions-page) > div:has(.discussions-page) {
+	flex: 1 1 0%;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* List rows — solid brand-green avatar (not the gradient), clean unread pill, active rail. */
+.channel-item .bg-gradient-to-br {
+	background-image: none !important;
+	background-color: #006241 !important; /* level1 */
+}
+.channel-item .rounded-full.bg-level1 {
+	min-width: 1.25rem;
+	height: 1.25rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 0.35rem;
+}
+.channel-item.active-channel {
+	border-left-width: 4px;
+	background-color: #d4e9e2 !important; /* level4 */
+}
+
+/* Conversation bubbles — softer radius. */
+.chat-bubble-own,
+.chat-bubble-other {
+	border-radius: 1.1rem;
+}
+
+/* Back-to-list arrow in the conversation header — phones/tablets only. */
+.discussions-back-mobile {
+	display: inline-flex;
+}
+@media (min-width: 768px) {
+	.discussions-back-mobile {
+		display: none;
+	}
+}
+
+/* Channel details slide (opened from the gear). */
+.discussions-detail-label {
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #9ca3af;
+	margin: 0.9rem 0 0.4rem;
+}
+.discussions-detail-card {
+	background: #ffffff;
+	border: 1px solid rgba(0, 0, 0, 0.06);
+	border-radius: 1rem;
+	padding: 0.85rem 1rem;
+	display: flex;
+	flex-direction: column;
+}
+.discussions-detail-list {
+	background: #ffffff;
+	border: 1px solid rgba(0, 0, 0, 0.06);
+	border-radius: 1rem;
+	overflow: hidden;
+}
+.discussions-detail-list > * + * {
+	border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+.discussions-context-pill {
+	align-self: flex-start;
+	background: #d4e9e2; /* level4 */
+	color: #004A2D;      /* greendark */
+	font-size: 0.8rem;
+	font-weight: 600;
+	padding: 0.25rem 0.7rem;
+	border-radius: 9999px;
+}
+.discussions-delete-btn {
+	background: #F6DAD8 !important; /* dangerlight */
+	color: #9C2B22 !important;      /* dangerdark */
+}
+
+/* Phones/tablets (<768px) — single-column flow (pairs with the #channel-view-panel
+   switch above). The list fills the screen; opening a conversation hides it. */
+@media (max-width: 767.98px) {
+	.discussions-sidebar {
+		width: 100% !important;
+		border-right: none !important;
+	}
+	.discussions-page:has(#channel-view-panel.vlPanelNotEmpty) .discussions-sidebar,
+	.discussions-page.discussions-has-channel .discussions-sidebar {
+		display: none !important;
+	}
+	.discussions-page.discussions-has-channel #channel-view-panel {
+		display: flex !important;
+	}
+	/* The 3rd "details" column is reached through the gear on mobile. */
+	.discussions-page > .border-l {
+		display: none !important;
+	}
+}
+
+/* Composer send button — round green icon button (paper plane) instead of the text pill. */
+.discussions-page button.chat-send-button {
+	width: 2.75rem;
+	height: 2.75rem;
+	min-width: 2.75rem;
+	padding: 0;
+	border-radius: 9999px;
+	font-size: 0; /* hide the text label */
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.discussions-page button.chat-send-button::after {
+	content: '';
+	width: 1.25rem;
+	height: 1.25rem;
+	background-color: #ffffff;
+	-webkit-mask: url('/icons/send-2.svg') center / contain no-repeat;
+	mask: url('/icons/send-2.svg') center / contain no-repeat;
+}
+
+/* Composer emoji picker — smiley dropdown + emoji grid (opens upward, the composer sits at
+   the bottom of the screen). */
+.chat-emoji-grid {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 0.1rem;
+	padding: 0.4rem;
+	max-height: 13rem;
+	overflow-y: auto;
+}
+.chat-emoji-btn {
+	font-size: 1.35rem;
+	line-height: 1;
+	padding: 0.25rem;
+	border-radius: 0.4rem;
+	text-align: center;
+	cursor: pointer;
+}
+.chat-emoji-btn:hover {
+	background: #f3f4f6;
+}
+/* Open the emoji menu above the toggle (composer is pinned to the bottom). */
+.chat-emoji-toggle .vlDropdownMenu {
+	top: auto !important;
+	bottom: 100% !important;
+	margin-bottom: 0.4rem;
+}

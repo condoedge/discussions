@@ -131,11 +131,44 @@ class DiscussionForm extends ChatComposerForm
 
 	protected function attachmentElement()
 	{
-		return _MultiFile()->name('files')
-			->class('chat-composer-upload mb-0 shrink-0')
-			->extraAttributes([
-				'team_id' => currentTeam()->id,
-			]);
+		return _Flex(
+			$this->emojiPicker(),
+			_MultiFile()->name('files')
+				->class('chat-composer-upload mb-0 shrink-0')
+				->extraAttributes([
+					'team_id' => currentTeam()->id,
+				]),
+		)->class('items-center gap-1 shrink-0');
+	}
+
+	/**
+	 * Emoji picker — a smiley dropdown whose buttons insert the emoji at the caret of THIS
+	 * composer's CKEditor (.ck-editor__editable exposes the instance as .ckeditorInstance,
+	 * the same handle the chat-kit uses to read the editor).
+	 */
+	protected function emojiPicker()
+	{
+		$composerId = $this->composerId();
+
+		$emojis = ['😀','😁','😂','🤣','😊','😍','😘','😎','🤔','😇','🙂','😉','😅','😭','😡','😢',
+			'👍','👎','👏','🙏','💪','🙌','👀','🤝','🎉','❤️','🔥','✅','⭐','💯','✨','😴'];
+
+		return _Dropdown()
+			->icon(_Sax('emoji-happy', 24))
+			->noCaret()
+			->class('chat-emoji-toggle text-gray-400 shrink-0')
+			->submenu(
+				_Div(
+					...array_map(fn ($emoji) => _Link($emoji)
+						->class('chat-emoji-btn')
+						->onClick->run(
+							"() => { var ed = document.querySelector('#{$composerId} .ck-editor__editable');"
+							. " if (ed && ed.ckeditorInstance) { var e = ed.ckeditorInstance;"
+							. " e.model.change(function (w) { e.model.insertContent(w.createText('{$emoji}')); });"
+							. " e.editing.view.focus(); } }"
+						), $emojis)
+				)->class('chat-emoji-grid')
+			);
 	}
 
 	protected function sendButtonLabel(): string

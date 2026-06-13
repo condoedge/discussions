@@ -60,10 +60,19 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
             return _FlexBetween(
 
                 !$this->discussionId ?
-                    _Link($this->channel->name)->class('truncate')
-                        ->href('discussions', [
-                            'channel_id' => $this->channelId,
-                        ]) :
+                    _Flex(
+                        // Back-to-list arrow — phones only (desktop keeps the 3-column layout).
+                        // Hard JS redirect: a plain ->href('discussions') gets marked vlActive
+                        // (the list route is a prefix of the current /discussions/{id}) and Kompo
+                        // then swallows the click, so the link never navigates.
+                        _Link()->icon('arrow-left')
+                            ->class('discussions-back-mobile text-2xl text-level1 mr-3')
+                            ->onClick->run("() => { window.location.assign('" . route('discussions') . "'); }"),
+                        _Link($this->channel->name)->class('truncate')
+                            ->href('discussions', [
+                                'channel_id' => $this->channelId,
+                            ]),
+                    )->class('items-center min-w-0') :
                     _Flex(
                         _Link($this->channel->name)->icon('arrow-left')
                             ->class('text-lg mr-4 text-level1')
@@ -75,12 +84,8 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
 
 
                 _FlexEnd(
-                    (!auth()->user()->can('delete', $this->channel) || $this->discussionId) ? null :
-                        _DeleteLink()->byKey($this->channel)->class('text-sm text-level1 mr-2')
-                            ->redirect('discussions'),
-
                     _Link()->icon(_Sax('setting-2',20))->class('mr-8 md:mr-0')
-                        ->get('channel-settings', ['id' => $this->channelId])
+                        ->get('channel-details', ['id' => $this->channelId])
                         ->inModal()
                 )
 
