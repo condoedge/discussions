@@ -60,10 +60,15 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
             return _FlexBetween(
 
                 !$this->discussionId ?
-                    _Link($this->channel->name)->class('truncate')
-                        ->href('discussions', [
-                            'channel_id' => $this->channelId,
-                        ]) :
+                    _Flex(
+                        // Back-to-list arrow — phones only (desktop keeps the 3-column layout).
+                        _Link()->icon('arrow-left')->href('discussions')
+                            ->class('discussions-back-mobile text-2xl text-level1 mr-3'),
+                        _Link($this->channel->name)->class('truncate')
+                            ->href('discussions', [
+                                'channel_id' => $this->channelId,
+                            ]),
+                    )->class('items-center min-w-0') :
                     _Flex(
                         _Link($this->channel->name)->icon('arrow-left')
                             ->class('text-lg mr-4 text-level1')
@@ -75,12 +80,8 @@ class ChannelDiscussionsPanel extends ChatMessagesQuery
 
 
                 _FlexEnd(
-                    (!auth()->user()->can('delete', $this->channel) || $this->discussionId) ? null :
-                        _DeleteLink()->byKey($this->channel)->class('text-sm text-level1 mr-2')
-                            ->redirect('discussions'),
-
                     _Link()->icon(_Sax('setting-2',20))->class('mr-8 md:mr-0')
-                        ->get('channel-settings', ['id' => $this->channelId])
+                        ->get('channel-details', ['id' => $this->channelId])
                         ->inModal()
                 )
 

@@ -3,6 +3,7 @@
 namespace Kompo\Discussions\Services;
 
 use Illuminate\Support\Facades\Route;
+use Kompo\Discussions\Components\ChannelDetailsModal;
 use Kompo\Discussions\Components\ChannelDiscussionsPanel;
 use Kompo\Discussions\Components\ChannelSettingsForm;
 use Kompo\Discussions\Components\ChannelSubjectsList;
@@ -34,6 +35,7 @@ class DiscussionsService
     public static function setRoutesChannelSettings()
     {
         Route::get('channel-edit/{id?}', ChannelSettingsForm::class)->name('channel-settings');
+        Route::get('channel-details/{id}', ChannelDetailsModal::class)->name('channel-details');
     }
 
     public static function setAllRoutes()

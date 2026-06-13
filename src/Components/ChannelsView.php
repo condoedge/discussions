@@ -81,7 +81,7 @@ class ChannelsView extends Form
 						_FlexBetween(
 							_Html($this->channel->name)->class('font-bold text-lg'),
 							_Link()->icon(_Sax('setting-2'))->class('text-gray-600')
-								->get('channel-settings', ['id' => $this->channelId])->inModal()
+								->get('channel-details', ['id' => $this->channelId])->inModal()
 						)->class('p-4 border-b border-gray-200'),
 
 						_Html('discussions.participants')->class('px-4 pt-4 pb-2 text-xs font-semibold text-gray-500 uppercase'),
@@ -107,6 +107,10 @@ class ChannelsView extends Form
 				->style('width: 320px; flex-shrink: 0;')
 			: null
 
-		)->class('discussions-page flex');
+		)->class('discussions-page flex')
+			// Marker so a server-rendered page that already has a channel (e.g. after a
+			// refresh on /discussions/{id}) stays on the full-screen conversation on mobile
+			// instead of falling back to the list (Kompo's .vlPanelNotEmpty is JS-only).
+			->class($this->channelId ? 'discussions-has-channel' : '');
 	}
 }
