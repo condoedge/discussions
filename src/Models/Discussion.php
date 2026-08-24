@@ -203,7 +203,7 @@ class Discussion extends Model
 
         $authorName = $this->addedBy->name;
         $avatar = $withImg ? _ProfileImg($this->addedBy) : null;
-        $timestamp = $this->created_at->format('H:i');
+        $timestamp = $this->created_at->isToday() ? $this->created_at->format('H:i') : $this->created_at->format('d/m/Y H:i');
         $footer = $isOwn ? $this->readReceiptAvatars() : null;
         $unread = !$this->read;
         $animate = $animate ?? (!$this->created_at || $this->created_at->diffInSeconds(now()) < 5);
