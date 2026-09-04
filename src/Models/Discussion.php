@@ -83,6 +83,15 @@ class Discussion extends Model
             ->values();
     }
 
+    public function areFilesViewableForAuthUser()
+    {
+        if ($this->channel()->forUser(auth()->id())->exists()) {
+            return true;
+        }
+
+        return false;
+    }
+
     /* ACTIONS */
     public function updateBox($box)
     {
